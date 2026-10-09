@@ -1,0 +1,3237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChessArena — играй, учись, анализируй</title>
+<style>
+:root{--bg:#2b2622;--bg2:#3a322a;--bg3:#4a3f33;--text:#e8e0d4;--muted:#a89f92;--accent:#b8a080;--accent-hover:#d4b896;--danger:#c93030;--light-sq:#f0d9b5;--dark-sq:#b58863;--sel:rgba(255,213,79,.55);--last:rgba(205,210,106,.5);--premove:rgba(220,80,80,.45)}
+body.light{--bg:#f5f0e8;--bg2:#fff;--bg3:#e8e0d4;--text:#2b2622;--muted:#6f6d6a}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+h2{margin-bottom:12px}
+h3{margin-bottom:8px}
+#topbar{display:flex;align-items:center;gap:16px;background:var(--bg2);padding:8px 16px;border-bottom:1px solid rgba(0,0,0,.3);position:sticky;top:0;z-index:50}
+.logo{font-size:20px;font-weight:700;color:var(--accent);cursor:pointer;white-space:nowrap}
+#topbar nav{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav-btn{background:none;border:none;color:var(--muted);padding:8px 12px;border-radius:6px;font-size:15px}
+.nav-btn:hover{color:var(--text);background:var(--bg3)}
+.nav-btn.active{color:var(--text);background:var(--bg3)}
+.icon-btn{background:none;border:none;font-size:20px;color:var(--muted);padding:6px;border-radius:6px}
+.icon-btn:hover{color:var(--text);background:var(--bg3)}
+main{flex:1;padding:20px;max-width:1200px;width:100%;margin:0 auto}
+.screen{animation:fadein .15s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.btn,.btn-primary{border:none;border-radius:8px;padding:10px 16px;font-size:15px;font-weight:600}
+.btn{background:var(--bg3);color:var(--text)}
+.btn:hover{background:var(--bg2);filter:brightness(1.2)}
+.btn-primary{background:var(--accent);color:#2b2622}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-danger{color:#ff8a80}
+.btn:disabled{opacity:.45;cursor:default}
+.btn-big{display:flex;align-items:center;gap:14px;width:100%;padding:16px 18px;border:none;border-radius:12px;background:var(--bg2);color:var(--text);text-align:left;font-size:16px;font-weight:600;transition:transform .06s ease,background .1s}
+.btn-big:hover{background:var(--bg3);transform:translateY(-1px)}
+.btn-big .emoji{font-size:28px}
+.btn-big .sub{font-size:13px;color:var(--muted);font-weight:400}
+.btn-big.primary{background:var(--accent);color:#2b2622}
+.btn-big.primary .sub{color:rgba(43,38,34,.7)}
+.btn-big.primary:hover{background:var(--accent-hover)}
+.home-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:20px}
+@media(max-width:860px){.home-grid{grid-template-columns:1fr}}
+.home-card{background:var(--bg2);border-radius:14px;padding:20px}
+.home-card h1{font-size:24px;margin-bottom:6px}
+.home-card .actions{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.home-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.stat-chip{background:var(--bg3);border-radius:10px;padding:10px 14px}
+.stat-chip .v{font-size:20px;font-weight:700}
+.stat-chip .k{font-size:12px;color:var(--muted)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{background:var(--bg2);color:var(--muted);border:1px solid transparent;border-radius:20px;padding:6px 14px;font-size:14px}
+.chip:hover{color:var(--text)}
+.chip.active{background:var(--accent);color:#2b2622}
+.bot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.bot-card{background:var(--bg2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px;transition:transform .08s ease}
+.bot-card:hover{transform:translateY(-2px)}
+.bot-head{display:flex;gap:12px;align-items:center}
+.bot-avatar{width:52px;height:52px;border-radius:12px;font-size:30px;display:flex;align-items:center;justify-content:center;background:var(--bg3);flex-shrink:0}
+.bot-name{font-weight:700;font-size:16px}
+.bot-rating{color:var(--muted);font-size:13px}
+.bot-style{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--accent);font-weight:600}
+.bot-bio{font-size:13px;color:var(--muted);flex:1;line-height:1.35}
+.bot-card .btn-primary{width:100%}
+.game-layout{display:flex;gap:20px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+.board-col{flex:0 1 auto;width:min(92vw,620px)}
+.side-col{flex:1 1 300px;max-width:380px;min-width:280px;background:var(--bg2);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.banner{display:flex;align-items:center;gap:10px;padding:6px 4px;min-height:40px}
+.banner .avatar{width:34px;height:34px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px}
+.banner .pinfo{flex:1;min-width:0}
+.banner .pname{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.banner .prating{color:var(--muted);font-size:12px}
+.banner .captured{display:flex;flex-wrap:wrap;font-size:15px;line-height:1;max-width:40%}
+.banner .mat-diff{color:var(--muted);font-size:12px;font-weight:600;margin-left:4px}
+.clock{font-variant-numeric:tabular-nums;font-size:20px;font-weight:700;background:var(--bg3);border-radius:8px;padding:4px 12px}
+.clock.low{color:#ff8a80}
+.clock.active-clock{outline:2px solid var(--accent)}
+.board-wrap{position:relative;width:100%;aspect-ratio:1;border-radius:6px;overflow:hidden;user-select:none;touch-action:none;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.board{position:absolute;inset:0;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr)}
+.sq{position:relative;display:flex;align-items:center;justify-content:center}
+.sq.l{background:var(--light-sq)}
+.sq.d{background:var(--dark-sq)}
+.sq.last::after{content:"";position:absolute;inset:0;background:var(--last)}
+.sq.sel::after{content:"";position:absolute;inset:0;background:var(--sel)}
+.sq.premove::after{content:"";position:absolute;inset:0;background:var(--premove)}
+.sq.check{background:radial-gradient(circle,rgba(255,60,60,.85) 20%,rgba(255,60,60,.25) 70%,transparent 75%)!important}
+.sq .coord{position:absolute;font-size:10px;font-weight:700;pointer-events:none;z-index:3}
+.sq.l .coord{color:var(--dark-sq)}
+.sq.d .coord{color:var(--light-sq)}
+.coord.file{right:3px;bottom:1px}
+.coord.rank{left:2px;top:1px}
+.piece{font-size:clamp(24px,7.2vmin,56px);line-height:1;z-index:2;cursor:grab;pointer-events:none;position:relative;transition:transform .12s ease}
+.piece.w{color:#f9f9f9;text-shadow:0 0 3px #000,0 2px 3px rgba(0,0,0,.5)}
+.piece.b{color:#1c1a19;text-shadow:0 0 2px rgba(255,255,255,.25),0 2px 3px rgba(0,0,0,.5)}
+body[data-piece-set="wood"] .piece.w{color:#f5e6d0;text-shadow:0 2px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.15)}
+body[data-piece-set="wood"] .piece.b{color:#5c4033;text-shadow:0 2px 3px rgba(0,0,0,.6), 0 0 2px rgba(255,255,255,.1)}
+body[data-piece-set="gold"] .piece.w{color:#ffd700;text-shadow:0 2px 4px rgba(0,0,0,.7), 0 0 12px rgba(255,215,0,.4)}
+body[data-piece-set="gold"] .piece.b{color:#b8860b;text-shadow:0 2px 4px rgba(0,0,0,.7), 0 0 8px rgba(184,134,11,.3)}
+body[data-piece-set="ice"] .piece.w{color:#e0f0ff;text-shadow:0 2px 4px rgba(0,0,0,.5), 0 0 12px rgba(173,216,230,.5)}
+body[data-piece-set="ice"] .piece.b{color:#4682b4;text-shadow:0 2px 4px rgba(0,0,0,.5), 0 0 8px rgba(70,130,180,.3)}
+body[data-piece-set="neon"] .piece.w{color:#0ff;text-shadow:0 0 8px #0ff, 0 2px 3px rgba(0,0,0,.5)}
+body[data-piece-set="neon"] .piece.b{color:#f0f;text-shadow:0 0 8px #f0f, 0 2px 3px rgba(0,0,0,.5)}
+body[data-piece-set="minimal"] .piece.w{color:#e8e0d4;text-shadow:none}
+body[data-piece-set="minimal"] .piece.b{color:#2b2622;text-shadow:none}
+.sq .dot{position:absolute;width:32%;height:32%;border-radius:50%;background:rgba(20,40,20,.28);z-index:2;pointer-events:none}
+.sq .ring{position:absolute;inset:4%;border-radius:50%;border:calc(.4vmin + 2px) solid rgba(20,40,20,.35);z-index:2;pointer-events:none}
+.drag-ghost{position:absolute;z-index:10;pointer-events:none;font-size:clamp(24px,7.2vmin,56px);line-height:1;transform:translate(-50%,-50%)}
+.sq-badge{position:absolute;top:-3px;right:-3px;width:38%;height:38%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(8px,1.6vmin,14px);font-weight:800;color:#fff;z-index:6;box-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none;font-family:Arial,sans-serif}
+#an-verdict{background:var(--bg3);border-radius:10px;padding:10px 12px;font-size:14px;min-height:42px;line-height:1.45}
+.an-statuses{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.an-status{display:flex;align-items:center;gap:5px;background:var(--bg3);border-radius:8px;padding:6px 7px;font-size:12px;overflow:hidden}
+.an-status .sym{font-size:14px;font-weight:700;width:18px;text-align:center;flex-shrink:0}
+.an-status .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.an-status .cnt{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0}
+.an-moves-list{max-height:220px;overflow-y:auto;font-size:13px;padding:4px 2px}
+.an-moves-list .ml-row{padding:0}
+.an-moves-list .ml-move{padding:1px 5px;font-size:13px}
+#an-graph{width:100%;background:var(--bg3);border-radius:10px;display:block}
+.board-wrap svg.arrows{position:absolute;inset:0;z-index:5;pointer-events:none}
+#game-status-line{font-size:14px;color:var(--muted);min-height:20px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--bg3)}
+.tab-btn{background:none;border:none;color:var(--muted);font-size:14px;padding:8px 12px;border-bottom:2px solid transparent}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
+.tab-body{min-height:180px;max-height:320px;overflow-y:auto}
+.badge{background:var(--danger);color:#fff;font-size:10px;border-radius:8px;padding:1px 5px;vertical-align:middle}
+.movelist{font-size:14px;padding:8px 4px}
+.ml-row{display:flex;gap:4px;padding:1px 0}
+.ml-num{width:32px;color:var(--muted);flex-shrink:0}
+.ml-move{flex:1;padding:2px 6px;border-radius:4px;cursor:default;display:flex;align-items:center;gap:4px}
+.ml-move.clickable{cursor:pointer}
+.ml-move.clickable:hover{background:var(--bg3)}
+.ml-move.current{background:var(--bg3);font-weight:700}
+.ml-move .tag{font-size:11px}
+.tag-best{color:#9ece6a}
+.tag-good{color:#a8c5a0}
+.tag-inacc{color:#e0af68}
+.tag-mistake{color:#f7768e}
+.tag-blunder{color:#ff5555;font-weight:700}
+#chat-log{display:flex;flex-direction:column;gap:6px;padding:8px 2px;min-height:140px}
+.chat-msg{font-size:14px;background:var(--bg3);border-radius:10px;padding:6px 10px;max-width:90%}
+.chat-msg .who{font-size:11px;color:var(--muted);display:block;margin-bottom:1px}
+.chat-msg.mine{align-self:flex-end;background:#5d4a3a}
+.chat-input{display:flex;gap:6px}
+.chat-input input{flex:1;background:var(--bg3);border:none;border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;outline:none}
+.game-buttons{display:flex;gap:6px;flex-wrap:wrap}
+.game-buttons .btn{flex:1;min-width:80px;padding:8px 6px;font-size:13px}
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:100}
+#modal{background:var(--bg2);border-radius:16px;padding:24px;width:min(92vw,460px);max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#modal h2{margin-bottom:10px}
+#modal .row{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+#modal .row .btn,#modal .row .btn-primary{flex:1;min-width:90px}
+.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:18px}
+.result-emoji{font-size:52px;text-align:center;margin:6px 0}
+.result-title{text-align:center;font-size:22px;font-weight:700}
+.result-sub{text-align:center;color:var(--muted);margin-top:4px}
+.rating-change{text-align:center;font-size:28px;font-weight:800;margin:12px 0;font-variant-numeric:tabular-nums}
+.promo-row{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.promo-row button{font-size:40px;width:70px;height:70px;border-radius:12px;border:none;background:var(--bg3);color:var(--text)}
+.promo-row button:hover{background:var(--accent);color:#2b2622}
+.tc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.tc-grid button{background:var(--bg3);border:2px solid transparent;border-radius:10px;color:var(--text);padding:10px 4px;font-size:15px;font-weight:700}
+.tc-grid button .tc-cat{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.tc-grid button.sel{border-color:var(--accent)}
+.avatar-pick{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.avatar-pick button{font-size:26px;background:var(--bg3);border:2px solid transparent;border-radius:10px;width:46px;height:46px}
+.avatar-pick button.sel{border-color:var(--accent)}
+.field{margin:10px 0}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.field input[type=text],.field select{width:100%;background:var(--bg3);border:none;border-radius:8px;padding:10px 12px;color:var(--text);font-size:15px;outline:none}
+.switch-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.switch{position:relative;width:44px;height:24px;background:var(--bg3);border-radius:12px;border:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:all .15s}
+.switch.on{background:var(--accent)}
+.switch.on::after{left:23px;background:#fff}
+.code-box{font-size:30px;font-weight:800;letter-spacing:6px;text-align:center;background:var(--bg3);border-radius:10px;padding:12px;margin:10px 0}
+.analysis-panels{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.analysis-panels{grid-template-columns:1fr}}
+.panel{background:var(--bg2);border-radius:14px;padding:16px}
+.panel textarea{width:100%;background:var(--bg3);border:none;border-radius:8px;color:var(--text);padding:10px;font-size:13px;resize:vertical;font-family:Consolas,monospace;margin-bottom:10px}
+.game-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;font-size:14px}
+.game-item:hover{background:var(--bg3)}
+.game-item .res{font-weight:700;width:36px}
+.game-item .flex1{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.game-item .btn{padding:4px 10px;font-size:13px}
+#an-graph{width:100%;background:var(--bg3);border-radius:10px}
+#an-summary{display:flex;flex-direction:column;gap:8px}
+.acc-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acc-card{background:var(--bg3);border-radius:10px;padding:10px;text-align:center}
+.acc-card .acc-num{font-size:26px;font-weight:800}
+.acc-card .who{font-size:12px;color:var(--muted)}
+.classif-row{display:flex;justify-content:space-between;font-size:13px;padding:2px 4px}
+.progress-bar{height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;margin-top:6px}
+#an-progress-fill{height:100%;width:0%;background:var(--accent);transition:width .15s}
+.progress-label{font-size:13px;color:var(--muted)}
+.an-moves{max-height:200px}
+.opening-item{background:var(--bg2);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.opening-item:hover{background:var(--bg3)}
+.opening-item .flex1{flex:1}
+.opening-item .eco{color:var(--muted);font-size:12px}
+.opening-item .desc{color:var(--muted);font-size:13px;margin-top:2px}
+.due-badge{background:var(--accent);color:#2b2622;font-size:11px;font-weight:700;border-radius:10px;padding:2px 8px}
+#tr-info{font-size:14px;line-height:1.5}
+#tr-info .tr-title{font-size:18px;font-weight:700;margin-bottom:6px}
+#tr-info .tr-msg{padding:10px;border-radius:8px;background:var(--bg3);margin-top:10px}
+#tr-info .tr-msg.ok{background:#5d4a3a}
+#tr-info .tr-msg.err{background:#5d3a3a}
+.profile-head{display:flex;gap:18px;align-items:center;background:var(--bg2);border-radius:14px;padding:20px;flex-wrap:wrap}
+.profile-head .avatar{width:80px;height:80px;border-radius:16px;background:var(--bg3);font-size:46px;display:flex;align-items:center;justify-content:center}
+.rating-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:16px 0}
+.rating-card{background:var(--bg2);border-radius:12px;padding:14px;text-align:center}
+.rating-card .rc-icon{font-size:22px}
+.rating-card .rc-val{font-size:26px;font-weight:800}
+.rating-card .rc-val .prov{color:var(--muted);font-size:18px}
+.rating-card .rc-name{font-size:12px;color:var(--muted)}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.profile-grid{grid-template-columns:1fr}}
+#rating-graph{width:100%;background:var(--bg3);border-radius:10px}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ach{background:var(--bg3);border-radius:10px;padding:12px;text-align:center;opacity:.4}
+.ach.unlocked{opacity:1;outline:2px solid var(--accent)}
+.ach .a-emoji{font-size:28px}
+.ach .a-name{font-size:13px;font-weight:700;margin-top:4px}
+.ach .a-desc{font-size:11px;color:var(--muted);margin-top:2px}
+#toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--bg2);color:var(--text);border-left:4px solid var(--accent);border-radius:10px;padding:12px 18px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:fadein .2s ease}
+.toast.big{font-size:16px;font-weight:600}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:5px}
+</style>
+</head>
+<body>
+<header id="topbar">
+  <div class="logo" data-nav="home">♞ ChessArena</div>
+  <nav>
+    <button class="nav-btn active" data-nav="home">Играть</button>
+    <button class="nav-btn" data-nav="bots">Боты</button>
+    <button class="nav-btn" data-nav="openings">Дебюты</button>
+    <button class="nav-btn" data-nav="analysis">Анализ</button>
+    <button class="nav-btn" data-nav="profile">Профиль</button>
+  </nav>
+  <button id="btn-settings" class="icon-btn" title="Настройки">⚙</button>
+</header>
+
+<main>
+  <section id="screen-home" class="screen"></section>
+
+  <section id="screen-bots" class="screen hidden">
+    <h2>Игра с ботом</h2>
+    <div class="chips" id="bot-filters"></div>
+    <div id="bot-grid" class="bot-grid"></div>
+  </section>
+
+  <section id="screen-game" class="screen hidden">
+    <div class="game-layout">
+      <div class="board-col">
+        <div class="banner" id="banner-top"></div>
+        <div id="game-board" class="board-wrap"></div>
+        <div class="banner" id="banner-bottom"></div>
+      </div>
+      <div class="side-col">
+        <div id="game-status-line"></div>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="moves">Ходы</button>
+          <button class="tab-btn" data-tab="chat">Чат <span id="chat-badge" class="badge hidden"></span></button>
+        </div>
+        <div id="tab-moves" class="tab-body"><div id="movelist" class="movelist"></div></div>
+        <div id="tab-chat" class="tab-body hidden">
+          <div id="chat-log"></div>
+          <div class="chat-input">
+            <input id="chat-input" maxlength="200" placeholder="Сообщение..." autocomplete="off">
+            <button id="chat-send" class="btn-primary">➤</button>
+          </div>
+        </div>
+        <div class="game-buttons">
+          <button id="btn-draw" class="btn">½ Ничья</button>
+          <button id="btn-resign" class="btn">🏳 Сдаться</button>
+          <button id="btn-flip" class="btn">⇄ Доска</button>
+          <button id="btn-leave" class="btn btn-danger">✕ Выйти</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-analysis" class="screen hidden">
+    <div id="analysis-home">
+      <h2>Анализ партий</h2>
+      <div class="analysis-panels">
+        <div class="panel">
+          <h3>Импорт PGN</h3>
+          <textarea id="pgn-input" rows="6" placeholder='[White "Игрок"]&#10;[Black "Соперник"]&#10;&#10;1. e4 e5 2. Nf3 Nc6 ...'></textarea>
+          <button id="btn-analyze-pgn" class="btn-primary">Анализировать PGN</button>
+        </div>
+        <div class="panel">
+          <h3>Мои партии</h3>
+          <div id="analysis-games"></div>
+        </div>
+      </div>
+    </div>
+    <div id="analysis-view" class="hidden">
+      <div class="game-layout">
+        <div class="board-col">
+          <div class="banner" id="an-top"></div>
+          <div id="an-board" class="board-wrap"></div>
+          <div class="banner" id="an-bottom"></div>
+        </div>
+        <div class="side-col" style="max-width:420px">
+          <div id="an-progress" class="hidden">
+            <div class="progress-label">Анализ позиций... <span id="an-progress-text"></span></div>
+            <div class="progress-bar"><div id="an-progress-fill"></div></div>
+          </div>
+          <div id="an-summary"></div>
+          <canvas id="an-graph" width="640" height="130"></canvas>
+          <div id="an-verdict"></div>
+          <div id="an-moves" class="an-moves-list"></div>
+          <div class="game-buttons">
+            <button id="an-start" class="btn">⏮</button>
+            <button id="an-prev" class="btn">←</button>
+            <button id="an-next" class="btn">→</button>
+            <button id="an-end" class="btn">⏭</button>
+          </div>
+          <div class="game-buttons">
+            <button id="an-best" class="btn">💡 Лучший ход</button>
+            <button id="an-copy-pgn" class="btn">📋 PGN</button>
+            <button id="an-back" class="btn">← Назад</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-openings" class="screen hidden">
+    <h2>Изучение дебютов</h2>
+    <p class="muted">Тренируйте дебюты интерактивно. Система интервальных повторений напомнит, когда дебют пора освежить.</p>
+    <div id="openings-list"></div>
+  </section>
+
+  <section id="screen-trainer" class="screen hidden">
+    <div class="game-layout">
+      <div class="board-col">
+        <div class="banner" id="tr-top"></div>
+        <div id="tr-board" class="board-wrap"></div>
+        <div class="banner" id="tr-bottom"></div>
+      </div>
+      <div class="side-col">
+        <div id="tr-info"></div>
+        <div class="game-buttons">
+          <button id="tr-hint" class="btn">💡 Подсказка</button>
+          <button id="tr-restart" class="btn">↻ Заново</button>
+          <button id="tr-exit" class="btn">← К списку</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-profile" class="screen hidden"></section>
+</main>
+
+<div id="modal-overlay" class="hidden"><div id="modal"></div></div>
+<div id="toast-wrap"></div>
+
+<script>
+/* ChessArena — chess engine: rules, search, eval, Glicko-2 */
+(function (global) {
+'use strict';
+
+var WHITE = 'w', BLACK = 'b';
+var FILES = 'abcdefgh';
+var START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+var MATE = 100000;
+
+var KNIGHT_D = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+var KING_D = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+var ROOK_D = [[-1,0],[1,0],[0,-1],[0,1]];
+var BISHOP_D = [[-1,-1],[-1,1],[1,-1],[1,1]];
+
+function inB(x, y) { return x >= 0 && x < 8 && y >= 0 && y < 8; }
+function colorOf(p) { return p === p.toUpperCase() ? WHITE : BLACK; }
+function opp(c) { return c === WHITE ? BLACK : WHITE; }
+function sqName(x, y) { return FILES[x] + (8 - y); }
+function parseSq(s) { return { x: FILES.indexOf(s[0]), y: 8 - parseInt(s[1], 10) }; }
+
+function Game(fen) { this.reset(fen); }
+
+Game.prototype.reset = function (fen) {
+  fen = fen || START_FEN;
+  this.board = new Array(64).fill(null);
+  var parts = fen.split(' ');
+  var rows = parts[0].split('/');
+  for (var y = 0; y < 8; y++) {
+    var x = 0;
+    for (var i = 0; i < rows[y].length; i++) {
+      var ch = rows[y][i];
+      if (ch >= '1' && ch <= '8') { x += parseInt(ch, 10); }
+      else { this.board[y * 8 + x] = ch; x++; }
+    }
+  }
+  this.turn = parts[1] === 'b' ? BLACK : WHITE;
+  this.castling = { K: false, Q: false, k: false, q: false };
+  var c = parts[2] || '-';
+  if (c.indexOf('K') >= 0) this.castling.K = true;
+  if (c.indexOf('Q') >= 0) this.castling.Q = true;
+  if (c.indexOf('k') >= 0) this.castling.k = true;
+  if (c.indexOf('q') >= 0) this.castling.q = true;
+  this.ep = -1;
+  if (parts[3] && parts[3] !== '-') {
+    var e = parseSq(parts[3]);
+    this.ep = e.y * 8 + e.x;
+  }
+  this.half = parseInt(parts[4] || '0', 10);
+  this.full = parseInt(parts[5] || '1', 10);
+  this.stack = [];
+  this.track = true;
+  this.posCounts = {};
+  this.posCounts[this.key()] = 1;
+};
+
+Game.prototype.pieceAt = function (x, y) { return this.board[y * 8 + x]; };
+
+Game.prototype.kingPos = function (color) {
+  var k = color === WHITE ? 'K' : 'k';
+  for (var i = 0; i < 64; i++) if (this.board[i] === k) return i;
+  return -1;
+};
+
+Game.prototype.isAttacked = function (x, y, by) {
+  var b = this.board, i, dx, dy, nx, ny, p;
+  var pdir = by === WHITE ? 1 : -1;
+  var pawn = by === WHITE ? 'P' : 'p';
+  for (i = -1; i <= 1; i += 2) {
+    nx = x + i; ny = y + pdir;
+    if (inB(nx, ny) && b[ny * 8 + nx] === pawn) return true;
+  }
+  var knight = by === WHITE ? 'N' : 'n';
+  for (i = 0; i < 8; i++) {
+    nx = x + KNIGHT_D[i][0]; ny = y + KNIGHT_D[i][1];
+    if (inB(nx, ny) && b[ny * 8 + nx] === knight) return true;
+  }
+  var king = by === WHITE ? 'K' : 'k';
+  for (i = 0; i < 8; i++) {
+    nx = x + KING_D[i][0]; ny = y + KING_D[i][1];
+    if (inB(nx, ny) && b[ny * 8 + nx] === king) return true;
+  }
+  var rook = by === WHITE ? 'R' : 'r', bishop = by === WHITE ? 'B' : 'b',
+      queen = by === WHITE ? 'Q' : 'q';
+  for (i = 0; i < 4; i++) {
+    dx = ROOK_D[i][0]; dy = ROOK_D[i][1];
+    nx = x + dx; ny = y + dy;
+    while (inB(nx, ny)) {
+      p = b[ny * 8 + nx];
+      if (p) { if (p === rook || p === queen) return true; break; }
+      nx += dx; ny += dy;
+    }
+  }
+  for (i = 0; i < 4; i++) {
+    dx = BISHOP_D[i][0]; dy = BISHOP_D[i][1];
+    nx = x + dx; ny = y + dy;
+    while (inB(nx, ny)) {
+      p = b[ny * 8 + nx];
+      if (p) { if (p === bishop || p === queen) return true; break; }
+      nx += dx; ny += dy;
+    }
+  }
+  return false;
+};
+
+Game.prototype.inCheck = function (color) {
+  color = color || this.turn;
+  var kp = this.kingPos(color);
+  if (kp < 0) return false;
+  return this.isAttacked(kp % 8, (kp / 8) | 0, opp(color));
+};
+
+Game.prototype.pseudoMoves = function (color) {
+  color = color || this.turn;
+  var moves = [], b = this.board, x, y, p, i, nx, ny, t;
+  var me = color === WHITE;
+  function add(fx, fy, tx, ty, extra) {
+    var m = { fx: fx, fy: fy, tx: tx, ty: ty, piece: b[fy * 8 + fx],
+              captured: b[ty * 8 + tx] };
+    if (extra) for (var k in extra) m[k] = extra[k];
+    moves.push(m);
+  }
+  for (y = 0; y < 8; y++) for (x = 0; x < 8; x++) {
+    p = b[y * 8 + x];
+    if (!p || colorOf(p) !== color) continue;
+    var lo = p.toLowerCase();
+    if (lo === 'p') {
+      var dir = me ? -1 : 1, startRow = me ? 6 : 1, promRow = me ? 0 : 7;
+      ny = y + dir;
+      if (inB(x, ny) && !b[ny * 8 + x]) {
+        if (ny === promRow) {
+          var pr = me ? ['Q','R','B','N'] : ['q','r','b','n'];
+          for (i = 0; i < 4; i++) add(x, y, x, ny, { promo: pr[i] });
+        } else {
+          add(x, y, x, ny);
+          if (y === startRow && !b[(y + 2 * dir) * 8 + x])
+            add(x, y, x, y + 2 * dir, { dbl: true });
+        }
+      }
+      for (i = -1; i <= 1; i += 2) {
+        nx = x + i; ny = y + dir;
+        if (!inB(nx, ny)) continue;
+        t = b[ny * 8 + nx];
+        if (t && colorOf(t) !== color) {
+          if (ny === promRow) {
+            var pr2 = me ? ['Q','R','B','N'] : ['q','r','b','n'];
+            for (var j = 0; j < 4; j++) add(x, y, nx, ny, { promo: pr2[j] });
+          } else add(x, y, nx, ny);
+        } else if (!t && this.ep === ny * 8 + nx) {
+          add(x, y, nx, ny, { ep: true, captured: me ? 'p' : 'P' });
+        }
+      }
+    } else if (lo === 'n') {
+      for (i = 0; i < 8; i++) {
+        nx = x + KNIGHT_D[i][0]; ny = y + KNIGHT_D[i][1];
+        if (inB(nx, ny)) { t = b[ny * 8 + nx];
+          if (!t || colorOf(t) !== color) add(x, y, nx, ny); }
+      }
+    } else if (lo === 'k') {
+      for (i = 0; i < 8; i++) {
+        nx = x + KING_D[i][0]; ny = y + KING_D[i][1];
+        if (inB(nx, ny)) { t = b[ny * 8 + nx];
+          if (!t || colorOf(t) !== color) add(x, y, nx, ny); }
+      }
+      var row = me ? 7 : 0, enemy = opp(color);
+      if (y === row && x === 4) {
+        var rights = me ? this.castling.K : this.castling.k;
+        var rookP = me ? 'R' : 'r';
+        if (rights && !b[row * 8 + 5] && !b[row * 8 + 6] &&
+            b[row * 8 + 7] === rookP &&
+            !this.isAttacked(4, row, enemy) && !this.isAttacked(5, row, enemy) &&
+            !this.isAttacked(6, row, enemy))
+          add(4, row, 6, row, { castle: 'K' });
+        rights = me ? this.castling.Q : this.castling.q;
+        if (rights && !b[row * 8 + 3] && !b[row * 8 + 2] && !b[row * 8 + 1] &&
+            b[row * 8 + 0] === rookP &&
+            !this.isAttacked(4, row, enemy) && !this.isAttacked(3, row, enemy) &&
+            !this.isAttacked(2, row, enemy))
+          add(4, row, 2, row, { castle: 'Q' });
+      }
+    } else {
+      var dirs = lo === 'r' ? ROOK_D : lo === 'b' ? BISHOP_D : KING_D;
+      for (i = 0; i < dirs.length; i++) {
+        nx = x + dirs[i][0]; ny = y + dirs[i][1];
+        while (inB(nx, ny)) {
+          t = b[ny * 8 + nx];
+          if (!t) add(x, y, nx, ny);
+          else { if (colorOf(t) !== color) add(x, y, nx, ny); break; }
+          nx += dirs[i][0]; ny += dirs[i][1];
+        }
+      }
+    }
+  }
+  return moves;
+};
+
+Game.prototype.push = function (m) {
+  var b = this.board, me = colorOf(m.piece);
+  var undo = {
+    m: m, capturedSq: m.ty * 8 + m.tx,
+    castling: { K: this.castling.K, Q: this.castling.Q, k: this.castling.k, q: this.castling.q },
+    ep: this.ep, half: this.half, full: this.full,
+    counted: this.track
+  };
+  if (m.ep) { undo.capturedSq = m.fy * 8 + m.tx; }
+  undo.capturedPiece = b[undo.capturedSq];
+
+  b[m.fy * 8 + m.fx] = null;
+  b[m.ty * 8 + m.tx] = m.promo ? m.promo : m.piece;
+  if (m.ep) b[undo.capturedSq] = null;
+  if (m.castle === 'K') { b[m.fy * 8 + 5] = b[m.fy * 8 + 7]; b[m.fy * 8 + 7] = null; }
+  if (m.castle === 'Q') { b[m.fy * 8 + 3] = b[m.fy * 8 + 0]; b[m.fy * 8 + 0] = null; }
+
+  if (m.piece === 'K') { this.castling.K = this.castling.Q = false; }
+  if (m.piece === 'k') { this.castling.k = this.castling.q = false; }
+  var from = m.fy * 8 + m.fx, to = m.ty * 8 + m.tx;
+  if (from === 56 || to === 56) this.castling.Q = false;
+  if (from === 63 || to === 63) this.castling.K = false;
+  if (from === 0 || to === 0) this.castling.q = false;
+  if (from === 7 || to === 7) this.castling.k = false;
+
+  this.ep = m.dbl ? ((m.fy + m.ty) / 2) * 8 + m.fx : -1;
+  this.half = (m.piece.toLowerCase() === 'p' || undo.capturedPiece) ? 0 : this.half + 1;
+  if (this.turn === BLACK) this.full++;
+  this.turn = opp(this.turn);
+  this.stack.push(undo);
+  if (this.track) {
+    var k = this.key();
+    this.posCounts[k] = (this.posCounts[k] || 0) + 1;
+  }
+};
+
+Game.prototype.pop = function () {
+  var undo = this.stack.pop();
+  if (!undo) return;
+  var m = undo.m, b = this.board;
+  if (this.track && undo.counted) {
+    var k = this.key();
+    if (this.posCounts[k]) { this.posCounts[k]--; if (!this.posCounts[k]) delete this.posCounts[k]; }
+  }
+  this.turn = opp(this.turn);
+  b[m.fy * 8 + m.fx] = m.piece;
+  b[m.ty * 8 + m.tx] = null;
+  b[undo.capturedSq] = undo.capturedPiece;
+  if (m.castle === 'K') { b[m.fy * 8 + 7] = b[m.fy * 8 + 5]; b[m.fy * 8 + 5] = null; }
+  if (m.castle === 'Q') { b[m.fy * 8 + 0] = b[m.fy * 8 + 3]; b[m.fy * 8 + 3] = null; }
+  this.castling = undo.castling;
+  this.ep = undo.ep;
+  this.half = undo.half;
+  this.full = undo.full;
+};
+
+Game.prototype.legalMoves = function () {
+  var pseudo = this.pseudoMoves(this.turn), out = [], me = this.turn;
+  for (var i = 0; i < pseudo.length; i++) {
+    var m = pseudo[i];
+    this.push(m);
+    var kp = this.kingPos(me);
+    if (kp >= 0 && !this.isAttacked(kp % 8, (kp / 8) | 0, opp(me))) out.push(m);
+    this.pop();
+  }
+  return out;
+};
+
+Game.prototype.key = function () {
+  var s = '', empty = 0;
+  for (var i = 0; i < 64; i++) {
+    var p = this.board[i];
+    if (p) { if (empty) { s += empty; empty = 0; } s += p; }
+    else empty++;
+    if (i % 8 === 7) { if (empty) { s += empty; empty = 0; } if (i < 63) s += '/'; }
+  }
+  var c = (this.castling.K ? 'K' : '') + (this.castling.Q ? 'Q' : '') +
+          (this.castling.k ? 'k' : '') + (this.castling.q ? 'q' : '');
+  return s + ' ' + this.turn + ' ' + (c || '-') + ' ' +
+    (this.ep >= 0 ? sqName(this.ep % 8, (this.ep / 8) | 0) : '-');
+};
+
+Game.prototype.toFEN = function () {
+  return this.key() + ' ' + this.half + ' ' + this.full;
+};
+
+Game.prototype.insufficientMaterial = function () {
+  var pieces = [], bishops = [], i, p;
+  for (i = 0; i < 64; i++) {
+    p = this.board[i];
+    if (p && p.toLowerCase() !== 'k') pieces.push({ p: p, sq: i });
+  }
+  if (pieces.length === 0) return true;
+  if (pieces.length === 1) {
+    var t = pieces[0].p.toLowerCase();
+    return t === 'b' || t === 'n';
+  }
+  if (pieces.length === 2) {
+    if (pieces[0].p.toLowerCase() === 'b' && pieces[1].p.toLowerCase() === 'b' &&
+        colorOf(pieces[0].p) !== colorOf(pieces[1].p)) {
+      var c0 = (pieces[0].sq % 8 + ((pieces[0].sq / 8) | 0)) % 2;
+      var c1 = (pieces[1].sq % 8 + ((pieces[1].sq / 8) | 0)) % 2;
+      return c0 === c1;
+    }
+  }
+  return false;
+};
+
+Game.prototype.status = function () {
+  var moves = this.legalMoves();
+  if (moves.length === 0) {
+    if (this.inCheck(this.turn))
+      return { over: true, result: this.turn === WHITE ? '0-1' : '1-0', reason: 'checkmate' };
+    return { over: true, result: '1/2-1/2', reason: 'stalemate' };
+  }
+  if (this.half >= 100) return { over: true, result: '1/2-1/2', reason: 'fifty' };
+  if (this.insufficientMaterial()) return { over: true, result: '1/2-1/2', reason: 'material' };
+  if (this.track && this.posCounts[this.key()] >= 3)
+    return { over: true, result: '1/2-1/2', reason: 'repetition' };
+  return { over: false, result: null, reason: null };
+};
+
+Game.prototype.san = function (m) {
+  var s = '';
+  if (m.castle === 'K') s = 'O-O';
+  else if (m.castle === 'Q') s = 'O-O-O';
+  else {
+    var lo = m.piece.toLowerCase();
+    if (lo === 'p') {
+      if (m.captured) s += FILES[m.fx];
+    } else {
+      s += lo.toUpperCase();
+      var others = this.legalMoves(), same = [];
+      for (var i = 0; i < others.length; i++) {
+        var o = others[i];
+        if (o.piece === m.piece && o.tx === m.tx && o.ty === m.ty &&
+            !(o.fx === m.fx && o.fy === m.fy)) same.push(o);
+      }
+      if (same.length) {
+        var needFile = false, needRank = false;
+        for (i = 0; i < same.length; i++) {
+          if (same[i].fx !== m.fx) needFile = true;
+          if (same[i].fy !== m.fy) needRank = true;
+        }
+        if (!needFile && !needRank) { needFile = true; needRank = true; }
+        if (needFile) s += FILES[m.fx];
+        if (needRank) s += (8 - m.fy);
+      }
+    }
+    if (m.captured) s += 'x';
+    s += sqName(m.tx, m.ty);
+    if (m.promo) s += '=' + m.promo.toUpperCase();
+  }
+  this.push(m);
+  if (this.inCheck(this.turn)) {
+    s += this.legalMoves().length === 0 ? '#' : '+';
+  }
+  this.pop();
+  return s;
+};
+
+Game.prototype.sanToMove = function (sanStr) {
+  var norm = sanStr.replace(/[+#?!]+/g, '').replace(/0/g, 'O').replace(/\s/g, '')
+                   .replace(/e\.p\.$/, '');
+  var moves = this.legalMoves();
+  for (var i = 0; i < moves.length; i++) {
+    var s = this.san(moves[i]).replace(/[+#?!]+/g, '').replace(/0/g, 'O');
+    if (s === norm) return moves[i];
+  }
+  return null;
+};
+
+var VAL = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
+
+var PST = {
+  p: [[0,0,0,0,0,0,0,0],[50,50,50,50,50,50,50,50],[10,10,20,30,30,20,10,10],
+      [5,5,10,25,25,10,5,5],[0,0,0,20,20,0,0,0],[5,-5,-10,0,0,-10,-5,5],
+      [5,10,10,-20,-20,10,10,5],[0,0,0,0,0,0,0,0]],
+  n: [[-50,-40,-30,-30,-30,-30,-40,-50],[-40,-20,0,0,0,0,-20,-40],
+      [-30,0,10,15,15,10,0,-30],[-30,5,15,20,20,15,5,-30],
+      [-30,0,15,20,20,15,0,-30],[-30,5,10,15,15,10,5,-30],
+      [-40,-20,0,5,5,0,-20,-40],[-50,-40,-30,-30,-30,-30,-40,-50]],
+  b: [[-20,-10,-10,-10,-10,-10,-10,-20],[-10,0,0,0,0,0,0,-10],
+      [-10,0,5,10,10,5,0,-10],[-10,5,5,10,10,5,5,-10],
+      [-10,0,10,10,10,10,0,-10],[-10,10,10,10,10,10,10,-10],
+      [-10,5,0,0,0,0,5,-10],[-20,-10,-10,-10,-10,-10,-10,-20]],
+  r: [[0,0,0,0,0,0,0,0],[5,10,10,10,10,10,10,5],[-5,0,0,0,0,0,0,-5],
+      [-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],[-5,0,0,0,0,0,0,-5],
+      [-5,0,0,0,0,0,0,-5],[0,0,0,5,5,0,0,0]],
+  q: [[-20,-10,-10,-5,-5,-10,-10,-20],[-10,0,0,0,0,0,0,-10],
+      [-10,0,5,5,5,5,0,-10],[-5,0,5,5,5,5,0,-5],
+      [0,0,5,5,5,5,0,-5],[-10,5,5,5,5,5,0,-10],
+      [-10,0,5,0,0,0,0,-10],[-20,-10,-10,-5,-5,-10,-10,-20]],
+  k: [[-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],
+      [-30,-40,-40,-50,-50,-40,-40,-30],[-30,-40,-40,-50,-50,-40,-40,-30],
+      [-20,-30,-30,-40,-40,-30,-30,-20],[-10,-20,-20,-20,-20,-20,-20,-10],
+      [20,20,0,0,0,0,20,20],[20,30,10,0,0,10,30,20]],
+  ke: [[-50,-40,-30,-20,-20,-30,-40,-50],[-30,-20,-10,0,0,-10,-20,-30],
+       [-30,-10,20,30,30,20,-10,-30],[-30,-10,30,40,40,30,-10,-30],
+       [-30,-10,30,40,40,30,-10,-30],[-30,-10,20,30,30,20,-10,-30],
+       [-30,-30,0,0,0,0,-30,-30],[-50,-30,-30,-30,-30,-30,-30,-50]]
+};
+
+function evaluate(game, pers) {
+  var b = game.board, score = 0, mat = 0, i, p, x, y, t;
+  var queens = 0, minors = 0;
+  for (i = 0; i < 64; i++) {
+    p = b[i];
+    if (!p) continue;
+    t = p.toLowerCase();
+    if (t === 'q') queens++;
+    if (t === 'n' || t === 'b') minors++;
+  }
+  var endgame = queens === 0 || (queens === 2 && minors <= 2);
+  for (y = 0; y < 8; y++) for (x = 0; x < 8; x++) {
+    p = b[y * 8 + x];
+    if (!p) continue;
+    t = p.toLowerCase();
+    var v = VAL[t];
+    var table = (t === 'k' && endgame) ? PST.ke : PST[t];
+    var ps = p === p.toUpperCase() ? table[y][x] : table[7 - y][x];
+    var s = v + ps;
+    if (pers && pers.mat && t !== 'k') s = Math.round(s * pers.mat);
+    if (p === p.toUpperCase()) score += s; else score -= s;
+    mat += v;
+  }
+  return score;
+}
+
+function Searcher(game, opts) {
+  this.game = game;
+  this.nodes = 0;
+  this.deadline = 0;
+  this.stopped = false;
+  this.pers = (opts && opts.pers) || null;
+  this.useQS = !(opts && opts.qs === false);
+}
+
+Searcher.prototype.timeUp = function () {
+  if ((this.nodes & 2047) === 0 && Date.now() > this.deadline) this.stopped = true;
+  return this.stopped;
+};
+
+var MVV = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 99 };
+
+Searcher.prototype.orderMoves = function (moves) {
+  for (var i = 0; i < moves.length; i++) {
+    var m = moves[i], s = 0;
+    if (m.captured) s = 10 * MVV[m.captured.toLowerCase()] - MVV[m.piece.toLowerCase()];
+    if (m.promo) s += 90;
+    if (m.castle) s += 5;
+    m._s = s;
+  }
+  moves.sort(function (a, b) { return b._s - a._s; });
+  return moves;
+};
+
+Searcher.prototype.quiescence = function (alpha, beta, ply) {
+  this.nodes++;
+  if (this.timeUp()) return alpha;
+  var g = this.game, me = g.turn;
+  var inCheck = g.inCheck(me);
+  var stand = (me === WHITE ? 1 : -1) * evaluate(g, this.pers);
+  if (!inCheck) {
+    if (stand >= beta) return beta;
+    if (stand > alpha) alpha = stand;
+  }
+  if (ply > 10) return alpha;
+  var moves = this.orderMoves(g.pseudoMoves(me)), i, m;
+  var legalAny = false;
+  for (i = 0; i < moves.length; i++) {
+    m = moves[i];
+    if (!inCheck && !m.captured && !m.promo) continue;
+    g.push(m);
+    var kp = g.kingPos(me);
+    if (kp < 0 || g.isAttacked(kp % 8, (kp / 8) | 0, opp(me))) { g.pop(); continue; }
+    legalAny = true;
+    var score = -this.quiescence(-beta, -alpha, ply + 1);
+    g.pop();
+    if (this.stopped) return alpha;
+    if (score >= beta) return beta;
+    if (score > alpha) alpha = score;
+  }
+  if (inCheck && !legalAny) return -MATE + ply;
+  return alpha;
+};
+
+Searcher.prototype.search = function (depth, alpha, beta, ply) {
+  this.nodes++;
+  if (this.timeUp()) return alpha;
+  var g = this.game, me = g.turn;
+  if (depth <= 0) {
+    if (this.useQS) return this.quiescence(alpha, beta, ply);
+    return (me === WHITE ? 1 : -1) * evaluate(g, this.pers);
+  }
+  var moves = this.orderMoves(g.pseudoMoves(me));
+  var legalAny = false, best = -Infinity, i, m;
+  for (i = 0; i < moves.length; i++) {
+    m = moves[i];
+    g.push(m);
+    var kp = g.kingPos(me);
+    if (kp < 0 || g.isAttacked(kp % 8, (kp / 8) | 0, opp(me))) { g.pop(); continue; }
+    legalAny = true;
+    var score = -this.search(depth - 1, -beta, -alpha, ply + 1);
+    g.pop();
+    if (this.stopped) return alpha;
+    if (score > best) best = score;
+    if (score > alpha) alpha = score;
+    if (alpha >= beta) break;
+  }
+  if (!legalAny) return g.inCheck(me) ? -MATE + ply : 0;
+  return best;
+};
+
+function rootSearchDepth(game, depth, s) {
+  var me = game.turn;
+  var moves = s.orderMoves(game.pseudoMoves(me));
+  var results = [], i, m;
+  for (i = 0; i < moves.length; i++) {
+    m = moves[i];
+    game.push(m);
+    var kp = game.kingPos(me);
+    if (kp < 0 || game.isAttacked(kp % 8, (kp / 8) | 0, opp(me))) { game.pop(); continue; }
+    var score = -s.search(depth - 1, -Infinity, Infinity, 1);
+    game.pop();
+    if (s.stopped) break;
+    results.push({ move: m, score: score });
+  }
+  results.sort(function (a, b) { return b.score - a.score; });
+  return results;
+}
+
+function rootSearch(game, maxDepth, timeMs, opts) {
+  var s = new Searcher(game, opts);
+  s.deadline = Date.now() + (timeMs || 1000);
+  var best = null, nodes0 = 0;
+  for (var d = 1; d <= maxDepth; d++) {
+    var res = rootSearchDepth(game, d, s);
+    if (res.length || !best) best = res;
+    if (s.stopped) break;
+    if (best.length && Math.abs(best[0].score) > MATE - 100) break;
+  }
+  return { moves: best || [], nodes: s.nodes, stopped: s.stopped };
+}
+
+function winProb(cp) {
+  var c = Math.max(-1500, Math.min(1500, cp));
+  return 1 / (1 + Math.exp(-0.004 * c));
+}
+
+var GLICKO_SCALE = 173.7178, TAU = 0.5, EPS = 0.000001;
+
+function gphi(rd) { return rd / GLICKO_SCALE; }
+function gmu(r) { return (r - 1500) / GLICKO_SCALE; }
+function gG(phi) { return 1 / Math.sqrt(1 + 3 * phi * phi / (Math.PI * Math.PI)); }
+function gE(mu, muj, phij) { return 1 / (1 + Math.exp(-gG(phij) * (mu - muj))); }
+
+function glickoUpdate(player, results) {
+  var r = player.r, rd = player.rd, vol = player.vol;
+  if (!results.length) {
+    var phiPre = Math.sqrt(gphi(rd) * gphi(rd) + vol * vol);
+    return { r: r, rd: Math.min(350, GLICKO_SCALE * phiPre), vol: vol };
+  }
+  var mu = gmu(r), phi = gphi(rd);
+  var vInv = 0, deltaSum = 0, i, res, phij, gj, Ej;
+  for (i = 0; i < results.length; i++) {
+    res = results[i];
+    phij = gphi(res.rd); gj = gG(phij); Ej = gE(mu, gmu(res.r), phij);
+    vInv += gj * gj * Ej * (1 - Ej);
+    deltaSum += gj * (res.score - Ej);
+  }
+  var v = 1 / vInv;
+  var delta = v * deltaSum;
+  var a = Math.log(vol * vol);
+  var delta2 = delta * delta, phi2 = phi * phi;
+  function f(x) {
+    var ex = Math.exp(x);
+    var d1 = ex * (delta2 - phi2 - v - ex) / (2 * (phi2 + v + ex) * (phi2 + v + ex));
+    return d1 - (x - a) / (TAU * TAU);
+  }
+  var A = a, B;
+  if (delta2 > phi2 + v) B = a - Math.log(delta2 - phi2 - v);
+  else { var k = 1; while (f(a - k * TAU) < 0) k++; B = a - k * TAU; }
+  var fA = f(A), fB = f(B);
+  while (Math.abs(B - A) > EPS) {
+    var C = A + (A - B) * fA / (fB - fA), fC = f(C);
+    if (fC * fB < 0) { A = B; fA = fB; } else fA = fA / 2;
+    B = C; fB = fC;
+  }
+  var newVol = Math.exp(A / 2);
+  var phiStar = Math.sqrt(phi2 + newVol * newVol);
+  var newPhi = 1 / Math.sqrt(1 / (phiStar * phiStar) + 1 / v);
+  var newMu = mu + newPhi * newPhi * deltaSum;
+  return {
+    r: Math.round(GLICKO_SCALE * newMu + 1500),
+    rd: Math.round(GLICKO_SCALE * newPhi),
+    vol: newVol
+  };
+}
+
+function glickoExpect(r1, rd1, r2, rd2) {
+  var rd = Math.sqrt(rd1 * rd1 + rd2 * rd2);
+  return 1 / (1 + Math.pow(10, -((r1 - r2) / 400) / Math.sqrt(1 + 3 * Math.LN10 * Math.LN10 *
+    gG(gphi(rd)) * gG(gphi(rd)) / (Math.PI * Math.PI)) * (400 / 173.7178 * Math.LN10 / Math.log(10))));
+}
+
+function expectScore(r1, r2) { return 1 / (1 + Math.pow(10, (r2 - r1) / 400)); }
+
+var api = {
+  WHITE: WHITE, BLACK: BLACK, START_FEN: START_FEN, MATE: MATE,
+  Game: Game, evaluate: evaluate, rootSearch: rootSearch, winProb: winProb,
+  glickoUpdate: glickoUpdate, expectScore: expectScore,
+  sqName: sqName, parseSq: parseSq, colorOf: colorOf, opp: opp
+};
+
+if (typeof module !== 'undefined' && module.exports) module.exports = api;
+else global.ChessEngine = api;
+
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* ChessArena — приложение */
+'use strict';
+const E = window.ChessEngine;
+const { Game, rootSearch, evaluate, winProb, glickoUpdate, sqName } = E;
+
+const GLYPH = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
+
+// Наборы фигур: CSS-эффекты поверх unicode-глифов
+const PIECE_SETS = {
+  classic: { name: 'Классика', style: '' },
+  wood: { name: 'Дерево', style: 'text-shadow:0 2px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.15); color:#d4a574; font-weight:700' },
+  gold: { name: 'Золото', style: 'text-shadow:0 2px 4px rgba(0,0,0,.7), 0 0 12px rgba(255,215,0,.4); color:#ffd700; font-weight:700' },
+  ice: { name: 'Лёд', style: 'text-shadow:0 2px 4px rgba(0,0,0,.5), 0 0 12px rgba(173,216,230,.5); color:#add8e6; font-weight:700' },
+  neon: { name: 'Неон', style: 'text-shadow:0 0 8px currentColor, 0 2px 3px rgba(0,0,0,.5); font-weight:700' },
+  minimal: { name: 'Минимал', style: 'text-shadow:none; opacity:.9' },
+};
+const BOARD_THEMES = {
+  brown: { name: 'Коричневая', l: '#f0d9b5', d: '#b58863' },
+  green: { name: 'Зелёная', l: '#ebecd0', d: '#739552' },
+  blue: { name: 'Синяя', l: '#dee3e6', d: '#8ca2ad' },
+  gray: { name: 'Серая', l: '#e8e8e8', d: '#8b8b8b' },
+  dark: { name: 'Тёмная', l: '#4a3f33', d: '#2b2622' },
+  gold: { name: 'Золотая', l: '#f5e6c4', d: '#c9a227' },
+};
+
+const TIME_CONTROLS = [
+  { id: '1+0', base: 60, inc: 0, cat: 'bullet', label: '1 мин' },
+  { id: '2+1', base: 120, inc: 1, cat: 'bullet', label: '2|1' },
+  { id: '3+0', base: 180, inc: 0, cat: 'blitz', label: '3 мин' },
+  { id: '3+2', base: 180, inc: 2, cat: 'blitz', label: '3|2' },
+  { id: '5+0', base: 300, inc: 0, cat: 'blitz', label: '5 мин' },
+  { id: '10+0', base: 600, inc: 0, cat: 'rapid', label: '10 мин' },
+  { id: '15+10', base: 900, inc: 10, cat: 'rapid', label: '15|10' },
+];
+const CAT_NAMES = { bullet: 'Пуля', blitz: 'Блиц', rapid: 'Рапид', bots: 'Против ботов' };
+const CAT_ICONS = { bullet: '⚡', blitz: '🔥', rapid: '⏱', bots: '🤖' };
+
+const CHAT_POOLS = {
+  friendly: {
+    start: ['Привет! Удачной игры!', 'Удачи! Будем играть честно 😊', 'Здравствуй! Начнём?'],
+    capture: ['Забираю!', 'Хм, а это вкусно', 'Спасибо за фигуру!'],
+    captured: ['Ой!', 'Не заметил...', 'Бывает 😅'],
+    check: ['Шах!', 'Осторожнее с королём!'],
+    losing: ['Ты хорошо играешь...', 'Что-то пошло не так 😬'],
+    winning: ['Мне нравится эта позиция!', 'Так-то лучше!'],
+    end_win: ['Спасибо за игру! Реванш?', 'Хорошая была партия!'],
+    end_lose: ['Поздравляю! Заслуженная победа 👏', 'Красиво сыграно!'],
+    draw: ['Ничья — справедливо!', 'Равная игра!']
+  },
+  kid: {
+    start: ['Привет!! Я только учусь 🙂', 'Поиграем!!'],
+    capture: ['Ура!! Взял!', 'Хе-хе, забрал!'],
+    captured: ['Ааа! Отдай!', 'Ну вот... 😢'],
+    check: ['ШАХ! Шах-шах!', 'Поймал!'],
+    losing: ['Не подавлюсь... то есть не сдаюсь!', 'Ещё не конец!'],
+    winning: ['Я выигрываю?! Ураа!', 'Смотри, мам!'],
+    end_win: ['Я ВЫИГРАЛ!! Пап, смотри!!', 'Урааа!'],
+    end_lose: ['Ты слишком сильный...', 'Ещё партию! Я отомщу!'],
+    draw: ['А можно реванш?', 'Ничья это скучно 🙂']
+  },
+  grumpy: {
+    start: ['Ну давай.', 'Посмотрим, на что ты способен.'],
+    capture: ['Так.', 'Логично.', 'Моя.'],
+    captured: ['Хм.', 'Досадно.', 'Не критично.'],
+    check: ['Шах.', 'Шах, да.'],
+    losing: ['Позиция ещё далека от проигрышной.', 'Интересно...'],
+    winning: ['Как я и ожидал.', 'Позиция говорит сама за себя.'],
+    end_win: ['Как обычно.', 'Играй лучше в следующий раз.'],
+    end_lose: ['Повезло тебе.', 'Хм. Неплохо.'],
+    draw: ['Согласен. Скучно.', 'Ладно, ничья.']
+  },
+  calm: {
+    start: ['Добрый день. Приятной партии.', 'Здравствуйте. Начнём.'],
+    capture: ['Позволю себе взять.', 'Это моя фигура теперь.'],
+    captured: ['Просчитался.', 'Признаю, не видел.'],
+    check: ['Шах.', 'Внимание: шах.'],
+    losing: ['Трудная позиция. Буду защищаться.', 'Терпение — моё оружие.'],
+    winning: ['Позиция улучшается.', 'Спокойно, без спешки.'],
+    end_win: ['Благодарю за игру.', 'Хорошая партия, не правда ли?'],
+    end_lose: ['Вы сыграли сильнее. Честь вам.', 'Учусь на своих ошибках.'],
+    draw: ['Разумный исход.', 'Равная борьба.']
+  },
+  cocky: {
+    start: ['Готовься проиграть 😏', 'Постарайся продержаться хотя бы 20 ходов.'],
+    capture: ['Слишком легко.', 'Я же говорил 😎'],
+    captured: ['Это часть плана.', 'Жертва, очевидно же.'],
+    check: ['Шах! Нравится?', 'Беги, король, беги!'],
+    losing: ['Я просто разминаюсь.', 'Всё под контролем. Почти.'],
+    winning: ['Классика.', 'Ты уже можешь сдаваться, не обижусь.'],
+    end_win: ['Как всегда 😎', 'GG. Следующий!'],
+    end_lose: ['Ладно. Хорошо сыграл. Не зазнавайся.', 'Это был сбой матрицы.'],
+    draw: ['Ничья со мной — это тоже достижение.', 'Хм. Признаю, ты неплох.']
+  },
+  machine: {
+    start: ['Инициализация партии... Готов.', 'Соперник обнаружен. Начинаю вычисления.'],
+    capture: ['Материальный баланс: +1 в мою пользу.', 'Фигура захвачена.'],
+    captured: ['Ошибка в расчётах. Корректирую.', 'Потеря зафиксирована.'],
+    check: ['Шах. Вероятность мата растёт.', 'Король под угрозой.'],
+    losing: ['Оценка позиции снижается.', 'Режим защиты активирован.'],
+    winning: ['Оценка: выигрышная.', 'Вероятность победы: высокая.'],
+    end_win: ['Партия завершена. Ожидаемый результат.', 'Вычисления подтверждены.'],
+    end_lose: ['Невозможно... Пересчитываю... Ошибок нет. Ты силён.', 'Поражение зафиксировано. Реванш рекомендован.'],
+    draw: ['Результат: равновесие.', 'Ничья. Логично.']
+  }
+};
+
+const BOTS = [
+  { id: 'martin', name: 'Мартин', emoji: '👨‍👧‍👦', rating: 250, cat: 'beginner', style: 'Заботливый', pool: 'friendly',
+    bio: 'Папа двоих детей. Учит их шахматам и поддаётся, хотя сам и не мастер.',
+    pers: { mat: 1 }, book: ['e4'] },
+  { id: 'vera', name: 'Вера', emoji: '👵', rating: 300, cat: 'beginner', style: 'Спокойная', pool: 'calm',
+    bio: 'Играет в шахматы со времён пионерлагеря. Не спешит и любит чай.',
+    pers: { mat: 1, pas: 1 }, book: ['d4'] },
+  { id: 'tim', name: 'Тим', emoji: '🧒', rating: 350, cat: 'beginner', style: 'Шалун', pool: 'kid',
+    bio: 'Шесть лет. Обожает ферзя и выводит его на втором ходу. Всегда.',
+    pers: { mat: 1.2, queenTrap: 1 }, book: ['e4'] },
+  { id: 'nika', name: 'Ника', emoji: '👧', rating: 450, cat: 'beginner', style: 'Любопытная', pool: 'kid',
+    bio: 'Учится ходить конём. Иногда получается!',
+    pers: { mat: 1 }, book: ['e4', 'd4'] },
+  { id: 'oleg', name: 'Олег', emoji: '🧔', rating: 600, cat: 'beginner', style: 'Зевак', pool: 'friendly',
+    bio: 'Играет по вечерам после работы. Периодически зевает фигуры.',
+    pers: { mat: 1.05 }, book: ['e4'] },
+  { id: 'nelson', name: 'Нельсон', emoji: '😈', rating: 800, cat: 'intermediate', style: 'Ловушечник', pool: 'cocky',
+    bio: 'Обожает ранние атаки ферзём и детский мат. Осторожно!',
+    pers: { mat: 1, agg: 1.5, queenTrap: 1 }, book: ['e4'] },
+  { id: 'aibek', name: 'Айбек', emoji: '🏇', rating: 900, cat: 'intermediate', style: 'Прямолинейный', pool: 'friendly',
+    bio: 'Играет просто и надёжно: развил фигуры, сделал рокировку, пошёл вперёд.',
+    pers: { mat: 1, dev: 1 }, book: ['d4', 'e4'] },
+  { id: 'sonya', name: 'Соня', emoji: '🎨', rating: 1000, cat: 'intermediate', style: 'Творческая', pool: 'friendly',
+    bio: 'Художница. Ищет красивые ходы, иногда в ущерб позиции.',
+    pers: { mat: 0.95, agg: 1.2 }, book: ['e4'] },
+  { id: 'grisha', name: 'Гриша', emoji: '🎲', rating: 1100, cat: 'intermediate', style: 'Гамбитник', pool: 'cocky',
+    bio: 'Жертвует пешку в дебюте. Всегда. Даже когда не стоит.',
+    pers: { mat: 0.85, agg: 1.6, gambit: 1 }, book: ['e4', 'd4'] },
+  { id: 'lada', name: 'Лада', emoji: '🏹', rating: 1200, cat: 'intermediate', style: 'Атакующая', pool: 'cocky',
+    bio: 'Все фигуры — на королевский фланг. Защита? Не слышала.',
+    pers: { agg: 1.8, mat: 1 }, book: ['e4'] },
+  { id: 'viktor', name: 'Виктор', emoji: '🧐', rating: 1400, cat: 'advanced', style: 'Позиционный', pool: 'calm',
+    bio: 'Читает Нимцовича перед сном. Любит слабые поля и хорошие пешечные структуры.',
+    pers: { mat: 1, pas: 1.5, dev: 1 }, book: ['d4', 'Nf3'] },
+  { id: 'elza', name: 'Эльза', emoji: '❄️', rating: 1500, cat: 'advanced', style: 'Хладнокровная', pool: 'calm',
+    bio: 'Никогда не нервничает. Даже с ферзём под боем.',
+    pers: { mat: 1.05, pas: 1.2 }, book: ['d4'] },
+  { id: 'kim', name: 'Ким', emoji: '🥋', rating: 1600, cat: 'advanced', style: 'Контратакующая', pool: 'calm',
+    bio: 'Терпеливо ждёт твоей ошибки и бьёт в ответ. Как в айкидо.',
+    pers: { mat: 1, pas: 1.3, agg: 1.1 }, book: ['e4', 'c4'] },
+  { id: 'boris', name: 'Борис', emoji: '🛡️', rating: 1700, cat: 'advanced', style: 'Защитник', pool: 'grumpy',
+    bio: 'Пробить его оборону — как взломать сейф. Нудно, но эффективно.',
+    pers: { mat: 1.05, pas: 1.6 }, book: ['d4'] },
+  { id: 'elena', name: 'Елена', emoji: '👑', rating: 2000, cat: 'master', style: 'Универсал', pool: 'calm',
+    bio: 'Кандидат в мастера. Одинаково сильна во всех стадиях партии.',
+    pers: { mat: 1, pas: 1.2, dev: 1 }, book: ['d4', 'e4'] },
+  { id: 'marko', name: 'Марко', emoji: '⚔️', rating: 2100, cat: 'master', style: 'Тактик', pool: 'grumpy',
+    bio: 'Видит тактику на три хода вперёд. Не зевай.',
+    pers: { mat: 1, agg: 1.4 }, book: ['e4'] },
+  { id: 'zakhar', name: 'Захар', emoji: '🎓', rating: 2200, cat: 'master', style: 'Техник эндшпиля', pool: 'grumpy',
+    bio: 'Разменяет ферзей и переиграет тебя в пешечном окончании.',
+    pers: { mat: 1.02, pas: 1.3 }, book: ['d4', 'Nf3'] },
+  { id: 'ada', name: 'Ада', emoji: '💻', rating: 2300, cat: 'master', style: 'Счётная машина', pool: 'machine',
+    bio: 'Программирует движки по ночам. Играет почти как они.',
+    pers: { mat: 1, pas: 1.1, agg: 1.1 }, book: ['e4', 'd4'] },
+  { id: 'gorynych', name: 'Горыныч', emoji: '🐉', rating: 2500, cat: 'master', style: 'Монстр', pool: 'machine',
+    bio: 'Три головы, ноль ошибок. Самый сильный бот арены.',
+    pers: { mat: 1, agg: 1.2, pas: 1.1 }, book: ['e4', 'd4', 'c4'] },
+  { id: 'mentor', name: 'Ментор', emoji: '🧙', rating: null, adaptive: true, cat: 'adaptive', style: 'Адаптивный', pool: 'calm',
+    bio: 'Подстраивается под твой уровень: всегда играет чуть сильнее, чтобы ты рос.',
+    pers: { mat: 1 }, book: ['e4', 'd4'] },
+];
+const BOT_CATS = [
+  { id: 'all', name: 'Все' },
+  { id: 'beginner', name: 'Новичок (250–800)' },
+  { id: 'intermediate', name: 'Средний (800–1400)' },
+  { id: 'advanced', name: 'Продвинутый (1400–2000)' },
+  { id: 'master', name: 'Мастер (2000+)' },
+  { id: 'adaptive', name: 'Адаптивные' },
+];
+
+const OPENINGS = [
+  { id: 'italian', name: 'Итальянская партия', eco: 'C50', side: 'w',
+    desc: 'Классика: быстрое развитие и давление на пункт f7.',
+    lines: [
+      ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'd3', 'Nf6', 'O-O', 'd6'],
+      ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Nf6', 'd3', 'Bc5', 'c3', 'd6'],
+    ] },
+  { id: 'spanish', name: 'Испанская партия', eco: 'C70', side: 'w',
+    desc: 'Самый глубокий дебют: 3.Сb5 и борьба за центр.',
+    lines: [
+      ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6', 'Ba4', 'Nf6', 'O-O', 'Be7'],
+      ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'Nf6', 'O-O', 'Nxe4', 'd4', 'Nd6'],
+    ] },
+  { id: 'scotch', name: 'Шотландская партия', eco: 'C45', side: 'w',
+    desc: 'Прямой удар по центру: 3.d4.',
+    lines: [
+      ['e4', 'e5', 'Nf3', 'Nc6', 'd4', 'exd4', 'Nxd4', 'Nf6', 'Nc3', 'Bb4'],
+    ] },
+  { id: 'london', name: 'Лондонская система', eco: 'D02', side: 'w',
+    desc: 'Надёжная схема за белых: Сf4, e3, Кf3.',
+    lines: [
+      ['d4', 'd5', 'Bf4', 'Nf6', 'e3', 'e6', 'Nf3', 'Bd6', 'Bg3', 'O-O'],
+      ['d4', 'Nf6', 'Bf4', 'd5', 'e3', 'c5', 'c3', 'Nc6', 'Nd2', 'e6'],
+    ] },
+  { id: 'qg', name: 'Ферзевый гамбит', eco: 'D30', side: 'w',
+    desc: '2.c4 — борьба за центр ценой пешки (которую обычно возвращают).',
+    lines: [
+      ['d4', 'd5', 'c4', 'e6', 'Nc3', 'Nf6', 'Bg5', 'Be7', 'e3', 'O-O'],
+      ['d4', 'd5', 'c4', 'dxc4', 'Nf3', 'Nf6', 'e3', 'e6', 'Bxc4', 'c5'],
+    ] },
+  { id: 'sicilian', name: 'Сицилианская защита', eco: 'B20', side: 'b',
+    desc: 'Самый боевой ответ на 1.e4: 1...c5!',
+    lines: [
+      ['e4', 'c5', 'Nf3', 'd6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'a6'],
+      ['e4', 'c5', 'Nf3', 'Nc6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'e5'],
+    ] },
+  { id: 'french', name: 'Французская защита', eco: 'C00', side: 'b',
+    desc: 'Надёжная крепость: 1...e6 и 2...d5.',
+    lines: [
+      ['e4', 'e6', 'd4', 'd5', 'Nc3', 'Nf6', 'e5', 'Nfd7', 'f4', 'c5'],
+      ['e4', 'e6', 'd4', 'd5', 'Nd2', 'c5', 'exd5', 'exd5', 'Ngf3', 'Nc6'],
+    ] },
+  { id: 'caro', name: 'Защита Каро-Канн', eco: 'B10', side: 'b',
+    desc: 'Солидно и безопасно: 1...c6 и 2...d5.',
+    lines: [
+      ['e4', 'c6', 'd4', 'd5', 'Nc3', 'dxe4', 'Nxe4', 'Bf5', 'Ng3', 'Bg6'],
+      ['e4', 'c6', 'd4', 'd5', 'e5', 'Bf5', 'Nf3', 'e6', 'Be2', 'Nd7'],
+    ] },
+  { id: 'slav', name: 'Славянская защита', eco: 'D10', side: 'b',
+    desc: 'Ответ на ферзевый гамбит: пешка c6 поддерживает центр.',
+    lines: [
+      ['d4', 'd5', 'c4', 'c6', 'Nf3', 'Nf6', 'Nc3', 'dxc4', 'a4', 'Bf5'],
+    ] },
+  { id: 'pirc', name: 'Защита Пирца', eco: 'B07', side: 'b',
+    desc: 'Гибкий фианкетто: чёрные атакуют центр издалека.',
+    lines: [
+      ['e4', 'd6', 'd4', 'Nf6', 'Nc3', 'g6', 'Nf3', 'Bg7', 'Be2', 'O-O'],
+    ] },
+];
+
+const ACHIEVEMENTS = [
+  { id: 'first_game', emoji: '🎮', name: 'Первые шаги', desc: 'Сыграйте первую партию' },
+  { id: 'first_win', emoji: '🏆', name: 'Первая победа', desc: 'Выиграйте партию' },
+  { id: 'veteran', emoji: '🎖️', name: 'Ветеран', desc: 'Сыграйте 10 партий' },
+  { id: 'centurion', emoji: '💯', name: 'Сотник', desc: 'Сыграйте 100 партий' },
+  { id: 'bot_slayer', emoji: '⚔️', name: 'Убийца мастеров', desc: 'Победите бота 1500+' },
+  { id: 'streak5', emoji: '🔥', name: 'Серия', desc: '5 побед подряд' },
+  { id: 'sniper', emoji: '🎯', name: 'Снайпер', desc: 'Точность 90%+ в партии' },
+  { id: 'mate', emoji: '♛', name: 'Мат!', desc: 'Выиграйте матом' },
+  { id: 'opening_student', emoji: '📖', name: 'Студент', desc: 'Пройдите первый дебют' },
+  { id: 'opening_master', emoji: '🎓', name: 'Дебютный мастер', desc: 'Пройдите 5 дебютов' },
+];
+
+const AVATARS = ['🙂', '😎', '🦊', '🐺', '🦁', '🐼', '🦉', '🐸', '🤖', '👽', '🧙', '🥷', '🐯', '🦅'];
+
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return Array.from(document.querySelectorAll(sel)); }
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function choice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function fmtClock(ms) {
+  ms = Math.max(0, ms);
+  const s = Math.floor(ms / 1000), m = Math.floor(s / 60), ss = s % 60;
+  if (m >= 1) return m + ':' + String(ss).padStart(2, '0');
+  const d = Math.floor((ms % 1000) / 100);
+  return ss + '.' + d;
+}
+function fmtDate(t) {
+  const d = new Date(t);
+  return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+function toast(text, big) {
+  const t = el('div', 'toast' + (big ? ' big' : ''), text);
+  $('#toast-wrap').appendChild(t);
+  setTimeout(() => t.remove(), big ? 4000 : 2500);
+}
+function openModal(html) {
+  $('#modal').innerHTML = html;
+  $('#modal-overlay').classList.remove('hidden');
+}
+function closeModal() { $('#modal-overlay').classList.add('hidden'); }
+$('#modal-overlay').addEventListener('click', e => {
+  if (e.target === $('#modal-overlay')) closeModal();
+});
+
+const SND = {
+  ctx: null,
+  ensure() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  // деревянный стук: короткий шум + резонирующий тон с экспоненциальным затуханием
+  thock(vol, delay, baseFreq) {
+    if (!profile.settings.sound) return;
+    try {
+      this.ensure();
+      const t = this.ctx.currentTime + (delay || 0);
+      const ctx = this.ctx;
+      // шум удара
+      const noiseLen = 0.06;
+      const buf = ctx.createBuffer(1, ctx.sampleRate * noiseLen, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2);
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(vol * 0.7, t);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, t + noiseLen);
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass'; noiseFilter.frequency.value = 1200; noiseFilter.Q.value = 1.5;
+      noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(ctx.destination);
+      noise.start(t); noise.stop(t + noiseLen);
+      // резонирующий тон дерева
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = baseFreq || 220;
+      g.gain.setValueAtTime(vol * 0.4, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t + 0.4);
+    } catch (e) { }
+  },
+  move() { this.thock(0.5, 0, 200); },
+  capture() { this.thock(0.65, 0, 160); this.thock(0.4, 0.04, 240); },
+  check() { this.thock(0.5, 0, 300); this.thock(0.35, 0.06, 350); },
+  castle() { this.thock(0.5, 0, 180); this.thock(0.5, 0.08, 220); },
+  end(win) {
+    if (win) { [523, 659, 784].forEach((f, i) => this.thock(0.4, i * 0.12, f)); }
+    else { [400, 320, 240].forEach((f, i) => this.thock(0.4, i * 0.14, f)); }
+  },
+  notify() { this.thock(0.3, 0, 880); },
+};
+
+const PROFILE_KEY = 'chessarena_profile_v1';
+
+function defaultRating(r) { return { r: r || 800, rd: 350, vol: 0.06, games: 0 }; }
+
+function defaultProfile() {
+  return {
+    name: 'Игрок', avatar: '🙂', created: Date.now(),
+    ratings: { bullet: defaultRating(400), blitz: defaultRating(400), rapid: defaultRating(400), bots: defaultRating(400) },
+    ratingHistory: [],
+    games: [],
+    achievements: [],
+    openingStats: {},
+    streak: 0, bestStreak: 0,
+    settings: { sound: true, coords: true, theme: 'dark', board: 'brown', pieceSet: 'classic', premoveConfirm: true },
+  };
+}
+
+let profile;
+try {
+  profile = JSON.parse(localStorage.getItem(PROFILE_KEY)) || null;
+} catch (e) { profile = null; }
+if (!profile || !profile.ratings) profile = defaultProfile();
+profile.settings = Object.assign(defaultProfile().settings, profile.settings || {});
+
+function saveProfile() {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (e) { }
+}
+
+function applyTheme() {
+  document.body.classList.toggle('light', profile.settings.theme === 'light');
+  const theme = BOARD_THEMES[profile.settings.board] || BOARD_THEMES.brown;
+  document.documentElement.style.setProperty('--light-sq', theme.l);
+  document.documentElement.style.setProperty('--dark-sq', theme.d);
+  // применяем набор фигур
+  const setStyle = PIECE_SETS[profile.settings.pieceSet] ? PIECE_SETS[profile.settings.pieceSet].style : '';
+  document.documentElement.style.setProperty('--piece-style', setStyle);
+  // инлайн-стиль для фигур через CSS-переменную не работает, используем data-атрибут
+  document.body.dataset.pieceSet = profile.settings.pieceSet;
+}
+
+function getBotRating(bot) {
+  if (!bot.adaptive) return bot.rating;
+  const base = profile.ratings.bots.r;
+  return clamp(base + Math.round((Math.random() * 200 - 60)), 300, 2400);
+}
+
+function botParams(bot) {
+  const r = getBotRating(bot);
+  const depth = r < 650 ? 1 : r < 1000 ? 2 : r < 1400 ? 3 : r < 1800 ? 4 : r < 2200 ? 5 : 6;
+  const timeMs = r < 650 ? 250 : r < 1000 ? 500 : r < 1400 ? 900 : r < 1800 ? 1500 : r < 2200 ? 2500 : 4000;
+  const temperature = Math.round(180 * Math.exp(-r / 900)) + 3;
+  const blunder = clamp((1800 - r) / 1800 * 0.22, 0.002, 0.22);
+  return { r, depth, timeMs, temperature, blunder, qs: r >= 500 };
+}
+
+function ratingEntry(cat) { return profile.ratings[cat]; }
+function ratingLabel(cat) {
+  const e = ratingEntry(cat);
+  return e.r + (e.games < 10 ? '?' : '');
+}
+
+function updateRating(cat, oppR, oppRd, score) {
+  const entry = ratingEntry(cat);
+  const before = entry.r;
+  const res = glickoUpdate({ r: entry.r, rd: entry.rd, vol: entry.vol },
+    [{ r: oppR, rd: oppRd, score: score }]);
+  entry.r = res.r; entry.rd = res.rd; entry.vol = res.vol; entry.games++;
+  profile.ratingHistory.push({ t: Date.now(), cat, r: entry.r });
+  if (profile.ratingHistory.length > 500) profile.ratingHistory = profile.ratingHistory.slice(-500);
+  return entry.r - before;
+}
+
+function unlockAch(id) {
+  if (profile.achievements.includes(id)) return;
+  profile.achievements.push(id);
+  const a = ACHIEVEMENTS.find(x => x.id === id);
+  if (a) { toast(`${a.emoji} Достижение: ${a.name}!`, true); SND.notify(); }
+  saveProfile();
+}
+
+function createBoard(container) {
+  container.innerHTML = '';
+  const boardEl = el('div', 'board');
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'arrows');
+  svg.setAttribute('viewBox', '0 0 8 8');
+  container.appendChild(boardEl);
+  container.appendChild(svg);
+
+  const B = {
+    container, boardEl, svg,
+    orientation: 'w', game: null,
+    selected: null, targets: [], lastMove: null, checkSq: null,
+    premove: null, arrows: [], badge: null,
+    onUserMove: null, canSelect: null, legalFrom: null,
+    drag: null,
+  };
+
+  function toXY(r, c) {
+    return B.orientation === 'w' ? { x: c, y: r } : { x: 7 - c, y: 7 - r };
+  }
+  function toRC(x, y) {
+    return B.orientation === 'w' ? { r: y, c: x } : { r: 7 - y, c: 7 - x };
+  }
+  B.toRC = toRC;
+
+  B.squareFromEvent = function (e) {
+    const rect = boardEl.getBoundingClientRect();
+    const c = clamp(Math.floor((e.clientX - rect.left) / rect.width * 8), 0, 7);
+    const r = clamp(Math.floor((e.clientY - rect.top) / rect.height * 8), 0, 7);
+    return toXY(r, c);
+  };
+
+  B.render = function () {
+    const g = B.game;
+    boardEl.innerHTML = '';
+    if (!g) return;
+    const showCoords = profile.settings.coords;
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const { x, y } = toXY(r, c);
+      const sq = el('div', 'sq ' + (((x + y) % 2 === 0) ? 'l' : 'd'));
+      sq.dataset.x = x; sq.dataset.y = y;
+      if (B.lastMove && ((B.lastMove.fx === x && B.lastMove.fy === y) || (B.lastMove.tx === x && B.lastMove.ty === y)))
+        sq.classList.add('last');
+      if (B.selected && B.selected.x === x && B.selected.y === y) sq.classList.add('sel');
+      if (B.checkSq && B.checkSq.x === x && B.checkSq.y === y) sq.classList.add('check');
+      if (B.premove && ((B.premove.fx === x && B.premove.fy === y) || (B.premove.tx === x && B.premove.ty === y)))
+        sq.classList.add('premove');
+      const p = g.pieceAt(x, y);
+      if (p) {
+        const span = el('span', 'piece ' + (p === p.toUpperCase() ? 'w' : 'b'), GLYPH[p.toLowerCase()]);
+        sq.appendChild(span);
+      }
+      if (B.targets.some(t => t.x === x && t.y === y)) {
+        sq.appendChild(el('div', g.pieceAt(x, y) ? 'ring' : 'dot'));
+      }
+      if (B.badge && B.badge.x === x && B.badge.y === y) {
+        const bdg = el('div', 'sq-badge', B.badge.sym);
+        bdg.style.background = B.badge.color;
+        sq.appendChild(bdg);
+      }
+      if (showCoords) {
+        const bottomRow = B.orientation === 'w' ? 7 : 0;
+        const leftCol = B.orientation === 'w' ? 0 : 7;
+        if (r === 7) sq.appendChild(el('span', 'coord file', 'abcdefgh'[B.orientation === 'w' ? c : 7 - c]));
+        if (c === 0) sq.appendChild(el('span', 'coord rank', String(B.orientation === 'w' ? 8 - r : r + 1)));
+      }
+      boardEl.appendChild(sq);
+    }
+    B.renderArrows();
+  };
+
+  B.renderArrows = function () {
+    svg.innerHTML = '<defs><marker id="ah" markerWidth="3" markerHeight="3" refX="1.5" refY="1.5" orient="auto">' +
+      '<path d="M0,0 L3,1.5 L0,3 z" fill="context-fill"></path></marker></defs>';
+    const allArrows = [...B.arrows, ...B.userArrows];
+    for (const a of allArrows) {
+      const p1 = toRC(a.fx, a.fy), p2 = toRC(a.tx, a.ty);
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', p1.c + 0.5); line.setAttribute('y1', p1.r + 0.5);
+      const dx = (p2.c - p1.c), dy = (p2.r - p1.r);
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      line.setAttribute('x2', p1.c + 0.5 + dx / len * (len - 0.28));
+      line.setAttribute('y2', p1.r + 0.5 + dy / len * (len - 0.28));
+      line.setAttribute('stroke', a.color || 'rgba(129,182,76,0.9)');
+      line.setAttribute('stroke-width', '0.22');
+      line.setAttribute('stroke-linecap', 'round');
+      line.setAttribute('marker-end', 'url(#ah)');
+      svg.appendChild(line);
+    }
+  };
+
+  B.select = function (x, y) {
+    B.selected = { x, y };
+    B.targets = (B.legalFrom ? B.legalFrom(x, y) : []).map(m => ({ x: m.tx, y: m.ty }));
+    B.render();
+  };
+  B.deselect = function () { B.selected = null; B.targets = []; B.render(); };
+
+  function makeGhost(p, e) {
+    const ghost = el('div', 'drag-ghost piece ' + (p === p.toUpperCase() ? 'w' : 'b'), GLYPH[p.toLowerCase()]);
+    container.appendChild(ghost);
+    moveGhost(ghost, e);
+    return ghost;
+  }
+  function moveGhost(ghost, e) {
+    const rect = container.getBoundingClientRect();
+    ghost.style.left = (e.clientX - rect.left) + 'px';
+    ghost.style.top = (e.clientY - rect.top) + 'px';
+  }
+
+  boardEl.addEventListener('pointerdown', e => {
+    if (!B.game) return;
+    e.preventDefault();
+    const sq = B.squareFromEvent(e);
+    const p = B.game.pieceAt(sq.x, sq.y);
+    if (B.selected && !(B.selected.x === sq.x && B.selected.y === sq.y)) {
+      const from = B.selected;
+      const canMove = B.targets.some(t => t.x === sq.x && t.y === sq.y);
+      if (canMove && B.onUserMove) {
+        B.deselect();
+        B.onUserMove(from, sq);
+        return;
+      }
+    }
+    if (p && B.canSelect && B.canSelect(sq.x, sq.y)) {
+      B.select(sq.x, sq.y);
+      B.drag = { fx: sq.x, fy: sq.y, ghost: null, startX: e.clientX, startY: e.clientY };
+    } else {
+      B.deselect();
+    }
+  });
+  window.addEventListener('pointermove', e => {
+    if (!B.drag) return;
+    const d = B.drag;
+    if (!d.ghost && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) > 6) {
+      const p = B.game.pieceAt(d.fx, d.fy);
+      if (p) d.ghost = makeGhost(p, e);
+    }
+    if (d.ghost) moveGhost(d.ghost, e);
+  });
+  window.addEventListener('pointerup', e => {
+    if (!B.drag) return;
+    const d = B.drag;
+    B.drag = null;
+    if (d.ghost) {
+      d.ghost.remove();
+      const rect = boardEl.getBoundingClientRect();
+      if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        const sq = B.squareFromEvent(e);
+        if (!(sq.x === d.fx && sq.y === d.fy)) {
+          B.deselect();
+          if (B.onUserMove) B.onUserMove({ x: d.fx, y: d.fy }, sq);
+          return;
+        }
+      }
+      B.render();
+    }
+  });
+  // рисование стрелок правой кнопкой
+  boardEl.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    if (B.premove) { B.premove = null; B.render(); }
+    B.deselect();
+  });
+  boardEl.addEventListener('pointerdown', e => {
+    if (e.button !== 2) return;
+    e.preventDefault();
+    const sq = B.squareFromEvent(e);
+    B.arrowStart = sq;
+  });
+  window.addEventListener('pointerup', e => {
+    if (!B.arrowStart) return;
+    const start = B.arrowStart;
+    B.arrowStart = null;
+    const rect = boardEl.getBoundingClientRect();
+    if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
+    const end = B.squareFromEvent(e);
+    if (start.x === end.x && start.y === end.y) return;
+    // переключаем стрелку
+    const idx = B.userArrows.findIndex(a => a.fx === start.x && a.fy === start.y && a.tx === end.x && a.ty === end.y);
+    if (idx >= 0) B.userArrows.splice(idx, 1);
+    else B.userArrows.push({ fx: start.x, fy: start.y, tx: end.x, ty: end.y, color: 'rgba(255,100,100,0.8)' });
+    B.renderArrows();
+  });
+  B.userArrows = [];
+
+  return B;
+}
+
+function showScreen(name) {
+  $$('.screen').forEach(s => s.classList.add('hidden'));
+  $('#screen-' + name).classList.remove('hidden');
+  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
+  if (name === 'home') renderHome();
+  if (name === 'bots') renderBots();
+  if (name === 'openings') renderOpenings();
+  if (name === 'profile') renderProfile();
+  if (name === 'analysis') renderAnalysisHome();
+}
+$$('[data-nav]').forEach(b => b.addEventListener('click', () => showScreen(b.dataset.nav)));
+
+function renderHome() {
+  const s = $('#screen-home');
+  const wins = profile.games.filter(g => (g.result === '1-0' && g.color === 'w') || (g.result === '0-1' && g.color === 'b')).length;
+  const onlineOk = true; // Firebase работает и с file://, и с GitHub Pages
+  s.innerHTML = `
+    <div class="home-grid">
+      <div class="home-card">
+        <h1>Сыграем? ♞</h1>
+        <p class="muted">Онлайн-партии, боты-персонажи, анализ и дебютная школа.</p>
+        <div class="actions">
+          <button class="btn-big primary" id="home-quick">
+            <span class="emoji">⚡</span>
+            <span>Быстрая игра<br><span class="sub">Подбор соперника онлайн</span></span>
+          </button>
+          <button class="btn-big" id="home-bots">
+            <span class="emoji">🤖</span><span>Игра с ботом<br><span class="sub">${BOTS.length} персонажей от 250 до 2500</span></span>
+          </button>
+          <button class="btn-big" id="home-friend">
+            <span class="emoji">🔗</span>
+            <span>Игра с другом<br><span class="sub">По приватной ссылке</span></span>
+          </button>
+          <button class="btn-big" id="home-local">
+            <span class="emoji">🧍</span><span>Локальная игра<br><span class="sub">Два игрока на одном устройстве</span></span>
+          </button>
+          <button class="btn-big" id="home-openings">
+            <span class="emoji">📚</span><span>Тренировка дебютов<br><span class="sub">Интерактивный тренажёр</span></span>
+          </button>
+        </div>
+      </div>
+      <div class="home-card">
+        <h1>${profile.avatar} ${esc(profile.name)}</h1>
+        <p class="muted">Всего партий: ${profile.games.length} · Побед: ${wins}</p>
+        <div class="home-stats">
+          ${Object.keys(CAT_NAMES).map(cat => `
+            <div class="stat-chip">
+              <div class="v">${CAT_ICONS[cat]} ${ratingLabel(cat)}</div>
+              <div class="k">${CAT_NAMES[cat]}</div>
+            </div>`).join('')}
+        </div>
+        <div class="actions">
+          <button class="btn-big" id="home-profile"><span class="emoji">📊</span><span>Мой профиль</span></button>
+          <button class="btn-big" id="home-analysis"><span class="emoji">🔍</span><span>Анализ партий</span></button>
+        </div>
+      </div>
+    </div>`;
+  $('#home-quick').onclick = () => showQuickGameSetup();
+  $('#home-bots').onclick = () => showScreen('bots');
+  $('#home-friend').onclick = () => showFriendSetup();
+  $('#home-local').onclick = () => startLocalGame();
+  $('#home-openings').onclick = () => showScreen('openings');
+  $('#home-profile').onclick = () => showScreen('profile');
+  $('#home-analysis').onclick = () => showScreen('analysis');
+}
+
+let botFilter = 'all';
+function renderBots() {
+  const f = $('#bot-filters');
+  f.innerHTML = '';
+  for (const c of BOT_CATS) {
+    const chip = el('button', 'chip' + (botFilter === c.id ? ' active' : ''), c.name);
+    chip.onclick = () => { botFilter = c.id; renderBots(); };
+    f.appendChild(chip);
+  }
+  const grid = $('#bot-grid');
+  grid.innerHTML = '';
+  for (const bot of BOTS) {
+    if (botFilter !== 'all' && bot.cat !== botFilter) continue;
+    const rating = bot.adaptive ? '~' + ratingEntry('bots').r : bot.rating;
+    const card = el('div', 'bot-card', `
+      <div class="bot-head">
+        <div class="bot-avatar">${bot.emoji}</div>
+        <div>
+          <div class="bot-name">${bot.name}</div>
+          <div class="bot-rating">Рейтинг: ${rating}</div>
+        </div>
+      </div>
+      <span class="bot-style">${bot.style}</span>
+      <div class="bot-bio">${bot.bio}</div>
+      <button class="btn-primary">Играть</button>`);
+    card.querySelector('button').onclick = () => showBotSetup(bot);
+    grid.appendChild(card);
+  }
+}
+
+function showBotSetup(bot) {
+  openModal(`
+    <button class="modal-close" onclick="document.querySelector('#modal-overlay').classList.add('hidden')">✕</button>
+    <h2>${bot.emoji} ${bot.name} <span class="muted" style="font-size:15px">${bot.adaptive ? 'адаптивный' : bot.rating}</span></h2>
+    <p class="muted">${bot.bio}</p>
+    <div class="field"><label>Ваш цвет</label>
+      <div class="row">
+        <button class="btn" id="col-w">♔ Белые</button>
+        <button class="btn" id="col-r">🎲 Случайно</button>
+        <button class="btn" id="col-b">♚ Чёрные</button>
+      </div>
+    </div>
+    <div class="switch-row">
+      <span>Рейтинговая партия (${CAT_ICONS.bots} ${ratingLabel('bots')})</span>
+      <button class="switch on" id="rated-switch"></button>
+    </div>`);
+  let color = null, rated = true;
+  $('#rated-switch').onclick = e => { rated = !rated; e.target.classList.toggle('on', rated); };
+  $('#col-w').onclick = () => { color = 'w'; startBotGame(bot, color, rated); };
+  $('#col-b').onclick = () => { color = 'b'; startBotGame(bot, color, rated); };
+  $('#col-r').onclick = () => { color = Math.random() < 0.5 ? 'w' : 'b'; startBotGame(bot, color, rated); };
+}
+
+let SES = null;
+let gameBoard = createBoard($('#game-board'));
+gameBoard.canSelect = (x, y) => {
+  if (!SES || SES.over) return false;
+  const p = SES.game.pieceAt(x, y);
+  if (!p) return false;
+  const c = E.colorOf(p);
+  if (SES.mode === 'local') return c === SES.game.turn;
+  if (c !== SES.myColor) return false;
+  if (SES.game.turn === SES.myColor) return true;
+  return true;
+};
+gameBoard.legalFrom = (x, y) => {
+  if (!SES) return [];
+  return SES.game.legalMoves().filter(m => m.fx === x && m.fy === y);
+};
+gameBoard.onUserMove = (from, to) => {
+  if (!SES || SES.over) return;
+  const g = SES.game;
+  if (SES.mode !== 'local' && g.turn !== SES.myColor) {
+    const p = g.pieceAt(from.x, from.y);
+    if (p && E.colorOf(p) === SES.myColor) {
+      SES.premove = { fx: from.x, fy: from.y, tx: to.x, ty: to.y };
+      gameBoard.premove = SES.premove;
+      gameBoard.render();
+      toast('Предварительный ход установлен');
+    }
+    return;
+  }
+  const moves = g.legalMoves().filter(m => m.fx === from.x && m.fy === from.y && m.tx === to.x && m.ty === to.y);
+  if (!moves.length) return;
+  if (moves.some(m => m.promo)) {
+    showPromoPicker(g.turn, promo => {
+      const m = moves.find(mm => (mm.promo || '').toLowerCase() === promo);
+      if (m) humanMove(m);
+    });
+  } else {
+    humanMove(moves[0]);
+  }
+};
+
+function showPromoPicker(color, cb) {
+  const glyphs = color === 'w' ? ['Q', 'R', 'B', 'N'] : ['q', 'r', 'b', 'n'];
+  openModal(`<h3>Превращение пешки</h3><div class="promo-row">
+    ${glyphs.map(g => `<button data-p="${g.toLowerCase()}" class="piece ${color === 'w' ? 'w' : 'b'}">${GLYPH[g.toLowerCase()]}</button>`).join('')}
+  </div>`);
+  $$('.promo-row button').forEach(b => b.onclick = () => { closeModal(); cb(b.dataset.p); });
+}
+
+function newSession(opts) {
+  SES = Object.assign({
+    mode: 'bot', game: new Game(), moves: [], over: false, result: null, reason: null,
+    myColor: 'w', bot: null, botRating: null, rated: false, cat: 'bots',
+    clocks: null, tc: null, room: null, oppInfo: null, premove: null,
+    lastChat: 0, players: null, startTime: Date.now(), drawOffered: false,
+  }, opts);
+  gameBoard.game = SES.game;
+  gameBoard.orientation = SES.mode === 'local' ? 'w' : SES.myColor;
+  gameBoard.lastMove = null; gameBoard.checkSq = null; gameBoard.premove = null; gameBoard.arrows = [];
+  $('#movelist').innerHTML = '';
+  $('#chat-log').innerHTML = '';
+  $('#chat-badge').classList.add('hidden');
+  $('#game-status-line').textContent = '';
+  showScreen('game');
+  renderBanners();
+  updateStatusLine();
+  gameBoard.render();
+}
+
+function humanMove(m) {
+  if (!SES || SES.over) return;
+  const wasCapture = !!m.captured;
+  doMove(m, 'human');
+  if (SES.mode === 'online' && NET.connected && SES.room) {
+    NET.send({ t: 'relay', room: SES.room, data: { kind: 'move', san: SES.moves[SES.moves.length - 1].san, ms: SES.clocks ? Math.round(SES.clocks[SES.myColor]) : undefined, from: NET.myFbId } });
+  }
+  afterAnyMove(m, wasCapture);
+}
+
+function doMove(m, who) {
+  const san = SES.game.san(m);
+  SES.game.push(m);
+  SES.moves.push({ san, m });
+  gameBoard.lastMove = m;
+  gameBoard.premove = null; SES.premove = null;
+  if (SES.game.inCheck(SES.game.turn)) {
+    const kp = SES.game.kingPos(SES.game.turn);
+    gameBoard.checkSq = { x: kp % 8, y: (kp / 8) | 0 };
+  } else gameBoard.checkSq = null;
+  if (SES.clocks) {
+    SES.clocks[SES.game.turn === 'w' ? 'b' : 'w'] += (SES.tc.inc || 0) * 1000;
+    SES.clocks.lastTick = Date.now();
+  }
+  renderBanners();
+  renderMoveList();
+  gameBoard.render();
+  if (m.captured) SND.capture(); else if (m.castle) SND.castle(); else SND.move();
+  if (SES.game.inCheck(SES.game.turn)) SND.check();
+}
+
+function afterAnyMove(m, wasCapture) {
+  const st = SES.game.status();
+  if (st.over) { endGame(st.result, st.reason); return; }
+  if (SES.mode === 'bot' && SES.bot) {
+    const botIsTurn = SES.game.turn !== SES.myColor;
+    if (botIsTurn) {
+      scheduleBotChat(wasCapture && E.colorOf(m.captured) !== SES.myColor ? 'capture' :
+        wasCapture ? 'captured' :
+        SES.game.inCheck(SES.game.turn) ? 'check' : null);
+      scheduleBotMove();
+    }
+  }
+  updateStatusLine();
+  tryPremove();
+}
+
+function tryPremove() {
+  if (!SES || SES.over || !SES.premove) return;
+  if (SES.mode !== 'local' && SES.game.turn !== SES.myColor) return;
+  const pm = SES.premove;
+  SES.premove = null; gameBoard.premove = null;
+  const legal = SES.game.legalMoves().filter(mm =>
+    mm.fx === pm.fx && mm.fy === pm.fy && mm.tx === pm.tx && mm.ty === pm.ty);
+  if (!legal.length) { gameBoard.render(); return; }
+  const m = legal.find(mm => !mm.promo) || legal.find(mm => mm.promo && mm.promo.toLowerCase() === 'q');
+  setTimeout(() => { if (!SES.over) humanMove(m); }, 80);
+}
+
+function updateStatusLine() {
+  if (!SES) return;
+  const el = $('#game-status-line');
+  if (SES.over) { el.textContent = ''; return; }
+  if (SES.mode === 'local') { el.textContent = SES.game.turn === 'w' ? 'Ход белых' : 'Ход чёрных'; return; }
+  el.textContent = SES.game.turn === SES.myColor ? 'Ваш ход' : 'Ход соперника…';
+}
+
+function renderBanners() {
+  if (!SES) return;
+  const top = $('#banner-top'), bot = $('#banner-bottom');
+  const topColor = gameBoard.orientation === 'w' ? 'b' : 'w';
+  const bottomColor = gameBoard.orientation === 'w' ? 'w' : 'b';
+  renderBanner(top, topColor);
+  renderBanner(bot, bottomColor);
+}
+function bannerInfo(color) {
+  if (SES.mode === 'bot') {
+    if (color !== SES.myColor) {
+      return { avatar: SES.bot.emoji, name: SES.bot.name, rating: SES.botRating };
+    }
+    return { avatar: profile.avatar, name: profile.name, rating: SES.rated ? ratingLabel('bots') : null };
+  }
+  if (SES.mode === 'online') {
+    if (color !== SES.myColor) {
+      return { avatar: '🌐', name: SES.oppInfo.name || 'Соперник', rating: SES.oppInfo.rating };
+    }
+    return { avatar: profile.avatar, name: profile.name, rating: SES.oppInfo.myRating };
+  }
+  return { avatar: color === 'w' ? '⚪' : '⚫', name: color === 'w' ? 'Белые' : 'Чёрные', rating: null };
+}
+function capturedFor(color) {
+  const init = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+  const now = { p: 0, n: 0, b: 0, r: 0, q: 0 };
+  for (let i = 0; i < 64; i++) {
+    const p = SES.game.board[i];
+    if (p && E.colorOf(p) === color && p.toLowerCase() !== 'k') now[p.toLowerCase()]++;
+  }
+  let out = '';
+  for (const t of ['q', 'r', 'b', 'n', 'p']) {
+    for (let i = 0; i < init[t] - now[t]; i++) out += GLYPH[t];
+  }
+  return out;
+}
+function materialDiff(color) {
+  const V = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+  let d = 0;
+  for (let i = 0; i < 64; i++) {
+    const p = SES.game.board[i];
+    if (p && p.toLowerCase() !== 'k') {
+      const v = V[p.toLowerCase()];
+      d += E.colorOf(p) === color ? v : -v;
+    }
+  }
+  return d;
+}
+function renderBanner(elB, color) {
+  const info = bannerInfo(color);
+  const captured = capturedFor(color === 'w' ? 'b' : 'w');
+  const diff = materialDiff(color);
+  let clockHtml = '';
+  if (SES.clocks) {
+    const ms = SES.clocks[color];
+    const low = ms < 20000 ? ' low' : '';
+    const active = SES.game.turn === color && !SES.over ? ' active-clock' : '';
+    clockHtml = `<span class="clock${low}${active}" data-clock="${color}">${fmtClock(ms)}</span>`;
+  }
+  elB.innerHTML = `
+    <div class="avatar">${info.avatar}</div>
+    <div class="pinfo">
+      <div class="pname">${esc(info.name)}</div>
+      ${info.rating !== null && info.rating !== undefined ? `<div class="prating">${info.rating}</div>` : ''}
+    </div>
+    <div class="captured">${captured}${diff > 0 ? `<span class="mat-diff">+${diff}</span>` : ''}</div>
+    ${clockHtml}`;
+}
+
+function renderMoveList() {
+  const list = $('#movelist');
+  list.innerHTML = '';
+  for (let i = 0; i < SES.moves.length; i += 2) {
+    const row = el('div', 'ml-row');
+    row.appendChild(el('span', 'ml-num', (i / 2 + 1) + '.'));
+    row.appendChild(el('span', 'ml-move', SES.moves[i].san));
+    if (SES.moves[i + 1]) row.appendChild(el('span', 'ml-move', SES.moves[i + 1].san));
+    list.appendChild(row);
+  }
+  list.scrollTop = list.scrollHeight;
+}
+
+setInterval(() => {
+  if (!SES || !SES.clocks || SES.over) return;
+  const now = Date.now();
+  const dt = now - (SES.clocks.lastTick || now);
+  SES.clocks.lastTick = now;
+  const turn = SES.game.turn;
+  SES.clocks[turn] -= dt;
+  if (SES.clocks[turn] <= 0) {
+    SES.clocks[turn] = 0;
+    if (SES.mode === 'online' && NET.connected && SES.room) {
+      NET.send({ t: 'relay', room: SES.room, data: { kind: 'flag', color: turn } });
+    }
+    const winner = turn === 'w' ? 'b' : 'w';
+    endGame(winner === 'w' ? '1-0' : '0-1', 'timeout');
+    return;
+  }
+  const elC = document.querySelector(`[data-clock="${turn}"]`);
+  if (elC) {
+    elC.textContent = fmtClock(SES.clocks[turn]);
+    elC.classList.toggle('low', SES.clocks[turn] < 20000);
+  }
+}, 100);
+
+function endGame(result, reason) {
+  if (SES.over) return;
+  SES.over = true; SES.result = result; SES.reason = reason;
+  const myScore = SES.mode === 'local' ? null :
+    result === '1/2-1/2' ? 0.5 :
+    ((result === '1-0' && SES.myColor === 'w') || (result === '0-1' && SES.myColor === 'b')) ? 1 : 0;
+
+  let delta = null;
+  if (SES.mode === 'bot' && SES.rated) {
+    delta = updateRating('bots', SES.botRating, 80, myScore);
+  } else if (SES.mode === 'online' && SES.oppInfo.rating) {
+    delta = updateRating(SES.cat, SES.oppInfo.rating, 150, myScore);
+  }
+
+  const record = {
+    t: Date.now(), mode: SES.mode,
+    oppName: SES.mode === 'bot' ? SES.bot.name : SES.mode === 'online' ? (SES.oppInfo.name || 'Соперник') : 'Локальная игра',
+    oppRating: SES.mode === 'bot' ? SES.botRating : SES.oppInfo ? SES.oppInfo.rating : null,
+    color: SES.myColor, result, reason, cat: SES.cat, rated: SES.rated || SES.mode === 'online',
+    sans: SES.moves.map(x => x.san),
+    names: { w: bannerNameFor('w'), b: bannerNameFor('b') },
+    delta,
+  };
+  if (SES.mode !== 'local') {
+    profile.games.push(record);
+    if (profile.games.length > 200) profile.games = profile.games.slice(-200);
+    unlockAch('first_game');
+    if (profile.games.length >= 10) unlockAch('veteran');
+    if (profile.games.length >= 100) unlockAch('centurion');
+    if (myScore === 1) {
+      unlockAch('first_win');
+      if (reason === 'checkmate') unlockAch('mate');
+      if (SES.mode === 'bot' && SES.botRating >= 1500) unlockAch('bot_slayer');
+      profile.streak++;
+      if (profile.streak >= 5) unlockAch('streak5');
+      profile.bestStreak = Math.max(profile.bestStreak, profile.streak);
+    } else if (myScore === 0) profile.streak = 0;
+  }
+  saveProfile();
+  SES.record = record;
+
+  SND.end(myScore === 1);
+  if (SES.mode === 'bot' && SES.bot) {
+    botSay(myScore === 0.5 ? 'draw' : myScore === 1 ? 'end_lose' : 'end_win');
+  }
+  updateStatusLine();
+  showResultModal(record, myScore, delta);
+}
+
+function bannerNameFor(color) {
+  if (SES.mode === 'bot') return color === SES.myColor ? profile.name : SES.bot.name;
+  if (SES.mode === 'online') return color === SES.myColor ? profile.name : (SES.oppInfo.name || 'Соперник');
+  return color === 'w' ? 'Белые' : 'Чёрные';
+}
+
+function reasonText(reason) {
+  return {
+    checkmate: 'Мат', stalemate: 'Пат', fifty: 'Правило 50 ходов', material: 'Недостаточно материала',
+    repetition: 'Троекратное повторение', resign: 'Сдача', timeout: 'Время вышло',
+    draw_agreed: 'Согласованная ничья', abandon: 'Соперник покинул партию',
+  }[reason] || reason;
+}
+
+function showResultModal(record, myScore, delta) {
+  let emoji, title;
+  if (myScore === 1) { emoji = '🏆'; title = 'Победа!'; }
+  else if (myScore === 0) { emoji = '😔'; title = 'Поражение'; }
+  else if (myScore === 0.5) { emoji = '🤝'; title = 'Ничья'; }
+  else { emoji = '🏁'; title = 'Партия завершена'; }
+  const ratingHtml = delta !== null && delta !== undefined ?
+    `<div class="rating-change" style="color:${delta >= 0 ? 'var(--accent)' : '#ff8a80'}" id="rating-anim"></div>` : '';
+  openModal(`
+    <div class="result-emoji">${emoji}</div>
+    <div class="result-title">${title}</div>
+    <div class="result-sub">${reasonText(record.reason)} · ${record.result}</div>
+    ${ratingHtml}
+    <div class="row">
+      <button class="btn-primary" id="res-analysis">🔍 Анализ</button>
+      ${SES.mode !== 'online' ? '<button class="btn" id="res-rematch">↻ Реванш</button>' : ''}
+    </div>
+    <div class="row"><button class="btn" id="res-close">Закрыть</button></div>`);
+  if (delta !== null && delta !== undefined) {
+    const elR = $('#rating-anim');
+    let shown = 0; const step = delta / 20;
+    const iv = setInterval(() => {
+      shown += step;
+      if ((step > 0 && shown >= delta) || (step < 0 && shown <= delta) || step === 0) {
+        shown = delta; clearInterval(iv);
+      }
+      elR.textContent = (shown >= 0 ? '+' : '') + Math.round(shown) + '  (' + ratingLabel(record.cat) + ')';
+    }, 40);
+  }
+  $('#res-close').onclick = () => { closeModal(); showScreen('home'); };
+  $('#res-analysis').onclick = () => { closeModal(); openAnalysisView(record); };
+  const rm = $('#res-rematch');
+  if (rm) rm.onclick = () => {
+    closeModal();
+    if (SES.mode === 'bot') showBotSetup(SES.bot);
+    else startLocalGame();
+  };
+}
+
+$('#btn-resign').onclick = () => {
+  if (!SES || SES.over) return;
+  if (!confirm('Сдаться?')) return;
+  if (SES.mode === 'online' && NET.connected && SES.room)
+    NET.send({ t: 'relay', room: SES.room, data: { kind: 'resign' } });
+  const winner = SES.mode === 'local' ? (SES.game.turn === 'w' ? 'b' : 'w') : (SES.myColor === 'w' ? 'b' : 'w');
+  endGame(winner === 'w' ? '1-0' : '0-1', 'resign');
+};
+$('#btn-draw').onclick = () => {
+  if (!SES || SES.over) return;
+  if (SES.mode === 'local') {
+    if (confirm('Согласить ничью?')) endGame('1/2-1/2', 'draw_agreed');
+    return;
+  }
+  if (SES.mode === 'online') {
+    if (SES.drawOffered) return;
+    NET.send({ t: 'relay', room: SES.room, data: { kind: 'draw_offer' } });
+    SES.drawOffered = true;
+    toast('Предложение ничьей отправлено');
+    return;
+  }
+  const s = rootSearch(SES.game, 2, 300);
+  const botScore = s.moves.length ? s.moves[0].score : 0;
+  const botColor = SES.myColor === 'w' ? 'b' : 'w';
+  const evalForBot = SES.game.turn === botColor ? botScore : -botScore;
+  if (evalForBot <= 50) {
+    botSay('draw');
+    endGame('1/2-1/2', 'draw_agreed');
+  } else {
+    botSay('winning');
+    toast(`${SES.bot.name} отклоняет ничью`);
+  }
+};
+$('#btn-flip').onclick = () => {
+  gameBoard.orientation = gameBoard.orientation === 'w' ? 'b' : 'w';
+  gameBoard.render(); renderBanners();
+};
+$('#btn-leave').onclick = () => {
+  if (!SES) { showScreen('home'); return; }
+  if (!SES.over && !confirm('Покинуть партию? Это будет поражение.')) return;
+  if (!SES.over) {
+    if (SES.mode === 'online' && NET.connected && SES.room)
+      NET.send({ t: 'relay', room: SES.room, data: { kind: 'resign' } });
+    const winner = SES.myColor === 'w' ? 'b' : 'w';
+    endGame(winner === 'w' ? '1-0' : '0-1', 'resign');
+  }
+  closeModal();
+  SES = null;
+  showScreen('home');
+};
+
+$$('.tab-btn').forEach(b => b.onclick = () => {
+  $$('.tab-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  $('#tab-moves').classList.toggle('hidden', b.dataset.tab !== 'moves');
+  $('#tab-chat').classList.toggle('hidden', b.dataset.tab !== 'chat');
+  if (b.dataset.tab === 'chat') $('#chat-badge').classList.add('hidden');
+});
+
+function addChatMsg(who, text, mine) {
+  const log = $('#chat-log');
+  const m = el('div', 'chat-msg' + (mine ? ' mine' : ''), `<span class="who">${esc(who)}</span>${esc(text)}`);
+  log.appendChild(m);
+  log.scrollTop = log.scrollHeight;
+  if (!mine) {
+    const badge = $('#chat-badge');
+    badge.classList.remove('hidden');
+    badge.textContent = '!';
+    SND.notify();
+  }
+}
+$('#chat-send').onclick = sendChat;
+$('#chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+function sendChat() {
+  const inp = $('#chat-input');
+  const text = inp.value.trim();
+  if (!text || !SES) return;
+  inp.value = '';
+  addChatMsg(profile.name, text, true);
+  if (SES.mode === 'online' && NET.connected && SES.room)
+    NET.send({ t: 'relay', room: SES.room, data: { kind: 'chat', text } });
+  if (SES.mode === 'bot' && SES.bot) {
+    setTimeout(() => botSay(choice(['start', 'winning', 'losing'])), 800 + Math.random() * 1500);
+  }
+}
+
+function startBotGame(bot, myColor, rated) {
+  closeModal();
+  const params = botParams(bot);
+  newSession({
+    mode: 'bot', bot, myColor, rated, cat: 'bots',
+    botRating: params.r,
+  });
+  SES.botParams = params;
+  botSay('start');
+  if (SES.game.turn !== SES.myColor) scheduleBotMove();
+}
+
+function scheduleBotMove() {
+  if (!SES || SES.over || SES.mode !== 'bot') return;
+  setStatusThinking(true);
+  setTimeout(() => {
+    if (!SES || SES.over || SES.mode !== 'bot') return;
+    if (SES.game.turn === SES.myColor) return;
+    const move = computeBotMove();
+    setStatusThinking(false);
+    if (!move) return;
+    doMove(move, 'bot');
+    afterAnyMove(move, !!move.captured);
+  }, 350 + Math.random() * 700);
+}
+
+function setStatusThinking(on) {
+  $('#game-status-line').textContent = on ? `${SES.bot.name} думает…` : 'Ваш ход';
+}
+
+function computeBotMove() {
+  const g = SES.game, bot = SES.bot, p = SES.botParams;
+  const pers = bot.pers || {};
+  const res = rootSearch(g, p.depth, p.timeMs, { qs: p.qs, pers: pers.mat && pers.mat !== 1 ? pers : null, iterative: true });
+  if (!res.moves.length) return null;
+  let moves = res.moves.slice();
+
+  if (SES.moves.length === 0 && bot.book && bot.book.length) {
+    const want = choice(bot.book);
+    const found = moves.find(mm => g.san(mm.move).replace(/[+#]/g, '') === want);
+    if (found) return found.move;
+  }
+  if (moves[0].score < -1500 && Math.random() < 0.6 && SES.moves.length > 30) {
+    setTimeout(() => {
+      if (SES && !SES.over) {
+        botSay('losing');
+        endGame(SES.myColor === 'w' ? '1-0' : '0-1', 'resign');
+      }
+    }, 400);
+    return null;
+  }
+  if (Math.random() < p.blunder && moves.length > 1) {
+    return choice(moves.slice(1)).move;
+  }
+  const scored = moves.map(mm => {
+    let s = mm.score;
+    const m = mm.move;
+    if (pers.agg) {
+      if (m.captured) s += 20 * pers.agg;
+      g.push(m);
+      if (g.inCheck(g.turn)) s += 35 * pers.agg;
+      g.pop();
+    }
+    if (pers.queenTrap && m.piece.toLowerCase() === 'q' && SES.moves.length < 12) s += 60;
+    if (pers.gambit && m.piece.toLowerCase() === 'p' && SES.moves.length < 10) s += 15;
+    if (pers.pas && m.piece.toLowerCase() === 'p') {
+      const adv = E.colorOf(m.piece) === 'w' ? (6 - m.ty) : (m.ty - 1);
+      if (adv > 2) s += 4 * pers.pas;
+    }
+    if (pers.dev && (m.piece.toLowerCase() === 'n' || m.piece.toLowerCase() === 'b') && SES.moves.length < 16) s += 12;
+    return { m, s };
+  });
+  scored.sort((a, b) => b.s - a.s);
+  const best = scored[0].s;
+  const T = p.temperature;
+  const weights = scored.map(x => Math.exp((x.s - best) / Math.max(1, T)));
+  let sum = weights.reduce((a, b) => a + b, 0), r = Math.random() * sum;
+  for (let i = 0; i < scored.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return scored[i].m;
+  }
+  return scored[0].m;
+}
+
+function botSay(event) {
+  if (!SES || !SES.bot) return;
+  const pool = CHAT_POOLS[SES.bot.pool] || CHAT_POOLS.friendly;
+  const lines = pool[event] || [];
+  if (!lines.length) return;
+  addChatMsg(SES.bot.name, choice(lines), false);
+}
+function scheduleBotChat(event) {
+  if (!event) return;
+  const now = Date.now();
+  if (now - SES.lastChat < 5000) return;
+  if (Math.random() > 0.55) return;
+  SES.lastChat = now;
+  setTimeout(() => {
+    if (!SES || SES.over) return;
+    if (event === 'losing' || event === 'winning') { botSay(event); return; }
+    botSay(event);
+  }, 500 + Math.random() * 1200);
+}
+
+function startLocalGame() {
+  newSession({ mode: 'local' });
+  toast('Локальная игра: ходите по очереди');
+}
+
+const NET = {
+  ws: null, connected: false, queueing: false,
+  fbUrl: 'https://chessarena-default-rtdb.europe-west1.firebasedatabase.app',
+  fb: null, fbRoom: null, myFbId: null,
+  connect(cb) {
+    if (this.connected) { cb && cb(true); return; }
+    // сразу пробуем Firebase (надёжнее для file:// и GitHub Pages)
+    this.initFirebase().then(ok => {
+      if (ok) { cb && cb(true); return; }
+      // fallback на WebSocket (локальный сервер)
+      try {
+        this.ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+      } catch (e) { cb && cb(false); return; }
+      this.ws.onopen = () => {
+        this.connected = true;
+        this.send({ t: 'hello', name: profile.name, rating: profile.ratings.blitz.r });
+        cb && cb(true);
+      };
+      this.ws.onclose = () => { this.connected = false; };
+      this.ws.onerror = () => { cb && cb(false); };
+      this.ws.onmessage = ev => {
+        let msg; try { msg = JSON.parse(ev.data); } catch (e) { return; }
+        this.handle(msg);
+      };
+    });
+  },
+  async initFirebase() {
+    if (this.fb) return true;
+    try {
+      if (!window.firebase) {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+          s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
+        });
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js';
+          s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      }
+      firebase.initializeApp({ databaseURL: this.fbUrl });
+      this.fb = firebase.database();
+      this.myFbId = 'p_' + Math.random().toString(36).slice(2, 10);
+      this.connected = true;
+      return true;
+    } catch (e) {
+      console.error('Firebase init failed:', e);
+      return false;
+    }
+  },
+  send(obj) {
+    if (this.ws && this.ws.readyState === 1) { this.ws.send(JSON.stringify(obj)); return; }
+    if (!this.fb) return;
+    if (obj.t === 'hello') {
+      this.fb.ref('players/' + this.myFbId).set({ name: obj.name, rating: obj.rating, online: Date.now() });
+    } else if (obj.t === 'queue') {
+      this.fbQueue(obj);
+    } else if (obj.t === 'create') {
+      this.fbCreate(obj);
+    } else if (obj.t === 'join') {
+      this.fbJoin(obj);
+    } else if (obj.t === 'relay') {
+      this.fb.ref('rooms/' + obj.room + '/data').push(obj.data);
+    }
+  },
+  fbQueue(obj) {
+    const qid = this.myFbId;
+    this.fb.ref('queue/' + qid).set({ tc: obj.tc, rating: obj.rating, t: Date.now(), name: profile.name });
+    // ищем соперника
+    this.fb.ref('queue').once('value', snap => {
+      const q = snap.val() || {};
+      const others = Object.entries(q).filter(([id, p]) => id !== qid && Math.abs(p.rating - obj.rating) < 200);
+      if (others.length) {
+        const [oppId, opp] = others[0];
+        const room = Math.random().toString(36).slice(2, 6).toUpperCase();
+        this.fb.ref('rooms/' + room).set({ a: qid, b: oppId, tc: obj.tc, status: 'starting', nameA: profile.name, nameB: opp.name });
+        this.fb.ref('queue/' + qid).remove();
+        this.fb.ref('queue/' + oppId).remove();
+        this.fbRoom = room;
+        this.handle({ t: 'start', room, color: 'w', tc: obj.tc, opp: { name: opp.name, rating: opp.rating } });
+      }
+    });
+    // слушаем, не нашли ли нас
+    this.fb.ref('rooms').orderByChild('b').equalTo(qid).on('value', snap => {
+      const rooms = snap.val();
+      if (rooms) {
+        const [roomId, room] = Object.entries(rooms)[0];
+        if (room.status === 'starting' && !this.fbRoom) {
+          this.fbRoom = roomId;
+          this.handle({ t: 'start', room: roomId, color: 'b', tc: room.tc, opp: { name: room.nameA || 'Соперник', rating: 800 } });
+        }
+      }
+    });
+  },
+  fbCreate(obj) {
+    const room = Math.random().toString(36).slice(2, 6).toUpperCase();
+    this.fbRoom = room;
+    this.fb.ref('rooms/' + room).set({ a: this.myFbId, tc: obj.tc, status: 'waiting', creator: profile.name, rating: obj.rating });
+    this.handle({ t: 'created', room });
+    // слушаем присоединение
+    this.fb.ref('rooms/' + room).on('value', snap => {
+      const r = snap.val();
+      if (r && r.b && r.status === 'starting') {
+        this.handle({ t: 'start', room, color: 'w', tc: r.tc, opp: { name: r.guest || 'Соперник', rating: r.guestRating || 800 } });
+      }
+    });
+  },
+  async fbJoin(obj) {
+    const room = obj.room.toUpperCase();
+    const snap = await this.fb.ref('rooms/' + room).once('value');
+    const r = snap.val();
+    if (!r || r.b) { this.handle({ t: 'error', text: 'Комната не найдена или занята' }); return; }
+    this.fbRoom = room;
+    await this.fb.ref('rooms/' + room + '/b').set(this.myFbId);
+    await this.fb.ref('rooms/' + room + '/guest').set(profile.name);
+    await this.fb.ref('rooms/' + room + '/guestRating').set(obj.rating);
+    await this.fb.ref('rooms/' + room + '/status').set('starting');
+    this.handle({ t: 'start', room, color: 'b', tc: r.tc, opp: { name: r.creator || 'Соперник', rating: r.rating || 800 } });
+  },
+  handle(msg) {
+    if (msg.t === 'created') {
+      showRoomCode(msg.room);
+    } else if (msg.t === 'queued') {
+    } else if (msg.t === 'start') {
+      closeModal();
+      startOnlineGame(msg);
+      if (this.fb && this.fbRoom) {
+        this.fb.ref('rooms/' + this.fbRoom + '/data').on('child_added', snap => {
+          const data = snap.val();
+          if (data && data.from !== this.myFbId) this.handleRelay(data);
+        });
+      }
+    } else if (msg.t === 'error') {
+      closeModal();
+      toast(msg.text || 'Ошибка');
+    } else if (msg.t === 'opp_left') {
+      if (SES && SES.mode === 'online' && !SES.over) {
+        toast('Соперник покинул партию');
+        endGame(SES.myColor === 'w' ? '1-0' : '0-1', 'abandon');
+      }
+    } else if (msg.t === 'relay') {
+      handleRelay(msg.data);
+    }
+  },
+};
+
+function handleRelay(data) {
+  if (!SES || SES.mode !== 'online' || SES.over) return;
+  if (data.kind === 'move') {
+    const m = SES.game.sanToMove(data.san);
+    if (!m) return;
+    if (SES.clocks && data.ms !== undefined && data.ms !== null) {
+      SES.clocks[SES.myColor === 'w' ? 'b' : 'w'] = data.ms + (SES.tc.inc || 0) * 1000;
+    }
+    doMove(m, 'opp');
+    afterAnyMove(m, !!m.captured);
+  } else if (data.kind === 'chat') {
+    addChatMsg(SES.oppInfo.name || 'Соперник', data.text, false);
+  } else if (data.kind === 'resign') {
+    endGame(SES.myColor === 'w' ? '1-0' : '0-1', 'resign');
+  } else if (data.kind === 'flag') {
+    const loser = data.color;
+    endGame(loser === 'w' ? '0-1' : '1-0', 'timeout');
+  } else if (data.kind === 'draw_offer') {
+    if (confirm('Соперник предлагает ничью. Принять?')) {
+      NET.send({ t: 'relay', room: SES.room, data: { kind: 'draw_accept' } });
+      endGame('1/2-1/2', 'draw_agreed');
+    } else {
+      NET.send({ t: 'relay', room: SES.room, data: { kind: 'draw_decline' } });
+    }
+  } else if (data.kind === 'draw_accept') {
+    endGame('1/2-1/2', 'draw_agreed');
+  } else if (data.kind === 'draw_decline') {
+    SES.drawOffered = false;
+    toast('Ничья отклонена');
+  }
+}
+
+function showQuickGameSetup() {
+  openModal(`
+    <button class="modal-close" onclick="document.querySelector('#modal-overlay').classList.add('hidden')">✕</button>
+    <h2>Быстрая игра</h2>
+    <p class="muted">Выберите контроль времени — подберём соперника по рейтингу.</p>
+    <div class="tc-grid">
+      ${TIME_CONTROLS.map((tc, i) => `<button data-i="${i}" class="${i === 2 ? 'sel' : ''}">${tc.label}<span class="tc-cat">${CAT_ICONS[tc.cat]} ${CAT_NAMES[tc.cat]}</span></button>`).join('')}
+    </div>
+    <div class="row"><button class="btn-primary" id="queue-go">Найти игру</button></div>`);
+  let sel = 2;
+  $$('.tc-grid button').forEach(b => b.onclick = () => {
+    $$('.tc-grid button').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel'); sel = +b.dataset.i;
+  });
+  $('#queue-go').onclick = () => {
+    const tc = TIME_CONTROLS[sel];
+    NET.connect(ok => {
+      if (!ok) { toast('Не удалось подключиться к серверу'); return; }
+      NET.send({ t: 'queue', tc: tc.id, rating: ratingEntry(tc.cat).r });
+      openModal(`
+        <h2>Поиск соперника…</h2>
+        <p class="muted">Контроль: ${tc.label}. Диапазон рейтинга расширяется со временем.</p>
+        <div class="result-emoji">⏳</div>
+        <div class="row"><button class="btn" id="queue-cancel">Отмена</button></div>`);
+      $('#queue-cancel').onclick = () => { NET.send({ t: 'dequeue' }); closeModal(); };
+    });
+  };
+}
+
+function showFriendSetup() {
+  NET.connect(ok => {
+    if (!ok) { toast('Не удалось подключиться к серверу'); return; }
+    openModal(`
+      <button class="modal-close" onclick="document.querySelector('#modal-overlay').classList.add('hidden')">✕</button>
+      <h2>Игра с другом</h2>
+      <p class="muted">Создайте комнату и отправьте другу код или ссылку.</p>
+      <div class="tc-grid">
+        ${TIME_CONTROLS.map((tc, i) => `<button data-i="${i}" class="${i === 2 ? 'sel' : ''}">${tc.label}<span class="tc-cat">${CAT_NAMES[tc.cat]}</span></button>`).join('')}
+      </div>
+      <div class="row"><button class="btn-primary" id="create-room">Создать комнату</button></div>
+      <div class="field">
+        <label>Или введите код комнаты друга</label>
+        <div class="row">
+          <input type="text" id="join-code" maxlength="4" placeholder="ABCD" style="flex:1;background:var(--bg3);border:none;border-radius:8px;padding:10px 12px;color:var(--text);font-size:20px;letter-spacing:4px;text-transform:uppercase;text-align:center;">
+          <button class="btn-primary" id="join-room">Войти</button>
+        </div>
+      </div>`);
+    let sel = 2;
+    $$('.tc-grid button').forEach(b => b.onclick = () => {
+      $$('.tc-grid button').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel'); sel = +b.dataset.i;
+    });
+    $('#create-room').onclick = () => {
+      NET.send({ t: 'create', tc: TIME_CONTROLS[sel].id, rating: profile.ratings.blitz.r });
+    };
+    $('#join-room').onclick = () => {
+      const code = $('#join-code').value.trim().toUpperCase();
+      if (code.length !== 4) { toast('Код — 4 символа'); return; }
+      NET.send({ t: 'join', room: code, rating: profile.ratings.blitz.r });
+    };
+  });
+}
+
+function showRoomCode(code) {
+  const link = location.origin + location.pathname + '?room=' + code;
+  openModal(`
+    <h2>Комната создана</h2>
+    <p class="muted">Отправьте другу код или ссылку. Партия начнётся, как только он зайдёт.</p>
+    <div class="code-box">${code}</div>
+    <div class="row">
+      <button class="btn" id="copy-link">📋 Копировать ссылку</button>
+      <button class="btn" id="room-cancel">Отмена</button>
+    </div>
+    <div class="result-emoji">⏳</div>
+    <p class="muted" style="text-align:center">Ожидание друга…</p>`);
+  $('#copy-link').onclick = () => {
+    navigator.clipboard && navigator.clipboard.writeText(link);
+    toast('Ссылка скопирована');
+  };
+  $('#room-cancel').onclick = () => { NET.send({ t: 'leave' }); closeModal(); };
+}
+
+function startOnlineGame(msg) {
+  const tc = TIME_CONTROLS.find(t => t.id === msg.tc) || TIME_CONTROLS[2];
+  newSession({
+    mode: 'online', myColor: msg.color, room: msg.room, tc,
+    cat: tc.cat,
+    clocks: { w: tc.base * 1000, b: tc.base * 1000, lastTick: Date.now() },
+    oppInfo: { name: msg.opp.name, rating: msg.opp.rating, myRating: ratingLabel(tc.cat) },
+  });
+  toast(`Партия началась! Вы играете ${msg.color === 'w' ? 'белыми' : 'чёрными'}`);
+}
+
+function parsePgnMoves(pgn) {
+  let s = pgn.replace(/^\s*\[[^\]]*\]\s*$/gm, ' ');
+  s = s.replace(/\{[^}]*\}/g, ' ');
+  let prev;
+  do { prev = s; s = s.replace(/\([^()]*\)/g, ' '); } while (s !== prev);
+  s = s.replace(/\$\d+/g, ' ');
+  const tokens = s.split(/\s+/).filter(t =>
+    t && !/^\d+\.(\.\.)?$/.test(t) && !/^\d+\.$/.test(t) &&
+    !['1-0', '0-1', '1/2-1/2', '*'].includes(t) && !t.startsWith('[') && !t.endsWith(']'));
+  return tokens;
+}
+
+function gameFromSans(sans) {
+  const g = new Game();
+  const moves = [];
+  for (const san of sans) {
+    const m = g.sanToMove(san);
+    if (!m) return { error: 'Не удалось разобрать ход: ' + san };
+    moves.push({ san: g.san(m), m });
+    g.push(m);
+  }
+  return { moves };
+}
+
+const CLASSIF = {
+  best: { sym: '★', name: 'Лучший ход', cls: 'tag-best', color: '#9ece6a' },
+  excellent: { sym: '!', name: 'Отличный', cls: 'tag-best', color: '#9ece6a' },
+  good: { sym: '✓', name: 'Хороший', cls: 'tag-good', color: '#a8c5a0' },
+  inaccuracy: { sym: '?!', name: 'Неточность', cls: 'tag-inacc', color: '#e0af68' },
+  mistake: { sym: '?', name: 'Ошибка', cls: 'tag-mistake', color: '#f7768e' },
+  blunder: { sym: '??', name: 'Грубая ошибка', cls: 'tag-blunder', color: '#ff5555' },
+};
+
+let AN = null;
+let anBoard = createBoard($('#an-board'));
+anBoard.canSelect = () => false;
+
+function renderAnalysisHome() {
+  $('#analysis-home').classList.remove('hidden');
+  $('#analysis-view').classList.add('hidden');
+  const box = $('#analysis-games');
+  box.innerHTML = '';
+  const games = profile.games.slice().reverse().slice(0, 30);
+  if (!games.length) box.innerHTML = '<p class="muted">Пока нет сыгранных партий.</p>';
+  for (const g of games) {
+    const myWin = (g.result === '1-0' && g.color === 'w') || (g.result === '0-1' && g.color === 'b');
+    const res = g.result === '1/2-1/2' ? '½–½' : myWin ? '1–0' : '0–1';
+    const item = el('div', 'game-item', `
+      <span class="res" style="color:${g.result === '1/2-1/2' ? 'var(--muted)' : myWin ? 'var(--accent)' : '#ff8a80'}">${res}</span>
+      <span class="flex1">против ${esc(g.oppName)} · ${fmtDate(g.t)}</span>
+      <button class="btn">Анализ</button>`);
+    item.querySelector('button').onclick = () => openAnalysisView(g);
+    box.appendChild(item);
+  }
+}
+
+$('#btn-analyze-pgn').onclick = () => {
+  const pgn = $('#pgn-input').value.trim();
+  if (!pgn) { toast('Вставьте PGN'); return; }
+  const sans = parsePgnMoves(pgn);
+  if (!sans.length) { toast('Не найдены ходы в PGN'); return; }
+  const record = {
+    t: Date.now(), mode: 'pgn', oppName: 'PGN', color: 'w',
+    result: '*', reason: '', cat: null, sans,
+    names: { w: 'Белые', b: 'Чёрные' },
+  };
+  openAnalysisView(record);
+};
+
+function openAnalysisView(record) {
+  showScreen('analysis');
+  $('#analysis-home').classList.add('hidden');
+  $('#analysis-view').classList.remove('hidden');
+  const parsed = gameFromSans(record.sans);
+  if (parsed.error) { toast(parsed.error); return; }
+  AN = {
+    record, plies: [], idx: 0, running: false,
+    baseGame: parsed,
+  };
+  const g0 = new Game();
+  AN.positions = [g0];
+  for (const { m } of parsed.moves) {
+    const g = AN.positions[AN.positions.length - 1];
+    g.push(m);
+    const g2 = new Game(g.toFEN());
+    AN.positions.push(g2);
+  }
+  anBoard.orientation = record.color === 'b' ? 'b' : 'w';
+  $('#an-summary').innerHTML = '';
+  $('#an-moves').innerHTML = '';
+  drawEvalGraph();
+  anGoto(0);
+  renderAnBanners();
+  runAnalysis();
+}
+
+function renderAnBanners() {
+  const n = AN.record.names || { w: 'Белые', b: 'Чёрные' };
+  const topC = anBoard.orientation === 'w' ? 'b' : 'w';
+  $('#an-top').innerHTML = `<div class="avatar">${topC === 'w' ? '⚪' : '⚫'}</div><div class="pinfo"><div class="pname">${esc(n[topC])}</div></div>`;
+  const botC = anBoard.orientation === 'w' ? 'w' : 'b';
+  $('#an-bottom').innerHTML = `<div class="avatar">${botC === 'w' ? '⚪' : '⚫'}</div><div class="pinfo"><div class="pname">${esc(n[botC])}</div></div>`;
+}
+
+function anGoto(idx) {
+  AN.idx = clamp(idx, 0, AN.positions.length - 1);
+  anBoard.game = AN.positions[AN.idx];
+  anBoard.lastMove = AN.idx > 0 ? AN.baseGame.moves[AN.idx - 1].m : null;
+  const g = anBoard.game;
+  anBoard.checkSq = null;
+  if (AN.idx > 0 && g.inCheck(g.turn)) {
+    const kp = g.kingPos(g.turn);
+    anBoard.checkSq = { x: kp % 8, y: (kp / 8) | 0 };
+  }
+  const ply = AN.idx > 0 ? AN.plies[AN.idx - 1] : null;
+  anBoard.arrows = [];
+  anBoard.badge = null;
+  if (ply) {
+    const m = AN.baseGame.moves[AN.idx - 1].m;
+    const info = CLASSIF[ply.cls];
+    anBoard.badge = { x: m.tx, y: m.ty, sym: info.sym, color: info.color };
+    // для ошибок сразу показываем стрелку лучшего хода
+    if (ply.cls === 'inaccuracy' || ply.cls === 'mistake' || ply.cls === 'blunder') {
+      anBoard.arrows = [Object.assign({}, ply.bestMove, { color: 'rgba(184,160,128,0.95)' })];
+    }
+  }
+  anBoard.render();
+  renderAnVerdict(ply);
+  renderAnMoves();
+}
+
+function renderAnVerdict(ply) {
+  const v = $('#an-verdict');
+  if (!AN || AN.idx === 0) {
+    v.innerHTML = '<span class="muted">Начальная позиция</span>';
+    return;
+  }
+  const mv = AN.baseGame.moves[AN.idx - 1];
+  const num = Math.ceil(AN.idx / 2) + ((AN.idx - 1) % 2 === 0 ? '. ' : '… ');
+  if (!ply) {
+    v.innerHTML = `<b>${num}${esc(mv.san)}</b> <span class="muted">— анализ…</span>`;
+    return;
+  }
+  const info = CLASSIF[ply.cls];
+  let html = `<b>${num}${esc(mv.san)}</b> <span class="tag ${info.cls}" style="font-size:13px">${info.sym} ${info.name}</span>`;
+  if (ply.cls !== 'best' && ply.cls !== 'excellent') {
+    html += `<div style="margin-top:3px">Лучший ход: <b>${esc(ply.bestSan)}</b></div>`;
+  }
+  v.innerHTML = html;
+}
+
+function renderAnMoves() {
+  const list = $('#an-moves');
+  list.innerHTML = '';
+  for (let i = 0; i < AN.baseGame.moves.length; i += 2) {
+    const row = el('div', 'ml-row');
+    row.appendChild(el('span', 'ml-num', (i / 2 + 1) + '.'));
+    for (const j of [i, i + 1]) {
+      if (j >= AN.baseGame.moves.length) break;
+      const ply = AN.plies[j];
+      const tag = ply && ply.cls ? `<span class="tag ${CLASSIF[ply.cls].cls}">${CLASSIF[ply.cls].sym}</span>` : '';
+      const mv = el('span', 'ml-move clickable' + (AN.idx === j + 1 ? ' current' : ''),
+        AN.baseGame.moves[j].san + tag);
+      mv.onclick = () => anGoto(j + 1);
+      row.appendChild(mv);
+    }
+    list.appendChild(row);
+  }
+}
+
+async function runAnalysis() {
+  if (AN.running) return;
+  AN.running = true;
+  const prog = $('#an-progress');
+  prog.classList.remove('hidden');
+  const n = AN.baseGame.moves.length;
+  AN.plies = new Array(n).fill(null);
+  const g = new Game();
+  for (let i = 0; i < n; i++) {
+    if (!AN) return;
+    const before = rootSearch(g, 3, 550);
+    if (!before.moves.length) break;
+    const best = before.moves[0];
+    const bestSan = g.san(best.move);
+    const played = AN.baseGame.moves[i].m;
+    const playedEntry = before.moves.find(mm =>
+      mm.move.fx === played.fx && mm.move.fy === played.fy &&
+      mm.move.tx === played.tx && mm.move.ty === played.ty &&
+      (mm.move.promo || '') === (played.promo || ''));
+    const playedScore = playedEntry ? playedEntry.score : -10000;
+    const stm = g.turn;
+    const toCP = s => Math.abs(s) > 90000 ? Math.sign(s) * 1500 : s;
+    const wpBest = winProb(toCP(best.score));
+    const wpPlayed = winProb(toCP(playedScore));
+    const loss = Math.max(0, wpBest - wpPlayed);
+    let cls = 'blunder';
+    if (playedEntry === best || loss <= 0.015) cls = 'best';
+    else if (loss <= 0.04) cls = 'excellent';
+    else if (loss <= 0.09) cls = 'good';
+    else if (loss <= 0.18) cls = 'inaccuracy';
+    else if (loss <= 0.32) cls = 'mistake';
+    AN.plies[i] = {
+      cls, loss,
+      bestSan, bestMove: best.move,
+      wpWhite: stm === 'w' ? wpPlayed : 1 - wpPlayed,
+      acc: Math.max(0, 100 * Math.pow(1 - loss, 1.4)),
+    };
+    g.push(played);
+    $('#an-progress-fill').style.width = Math.round((i + 1) / n * 100) + '%';
+    $('#an-progress-text').textContent = `${i + 1}/${n}`;
+    renderAnMoves();
+    await new Promise(r => setTimeout(r, 0));
+  }
+  prog.classList.add('hidden');
+  AN.running = false;
+  renderAnSummary();
+  renderAnMoves();
+  drawEvalGraph();
+  anGoto(AN.idx); // обновить вердикт и значок после завершения анализа
+  if (AN.record.mode !== 'pgn' && n >= 20) {
+    const side = AN.record.color;
+    const accs = AN.plies.filter((p, i) => p && ((i % 2 === 0) === (side === 'w'))).map(p => p.acc);
+    if (accs.length) {
+      const avg = accs.reduce((a, b) => a + b, 0) / accs.length;
+      if (avg >= 90) unlockAch('sniper');
+    }
+  }
+}
+
+function renderAnSummary() {
+  const sides = { w: [], b: [] };
+  AN.plies.forEach((p, i) => { if (p) sides[i % 2 === 0 ? 'w' : 'b'].push(p); });
+  const acc = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b.acc, 0) / arr.length * 10) / 10 : 0;
+  const counts = color => {
+    const c = {};
+    for (const k of Object.keys(CLASSIF)) c[k] = 0;
+    for (const p of sides[color]) c[p.cls]++;
+    return c;
+  };
+  const names = AN.record.names || { w: 'Белые', b: 'Чёрные' };
+  const cw = counts('w'), cb = counts('b');
+  $('#an-summary').innerHTML = `
+    <div class="acc-cards">
+      <div class="acc-card"><div class="acc-num">⚪ ${acc(sides.w)}</div><div class="who">${esc(names.w)} — точность</div></div>
+      <div class="acc-card"><div class="acc-num">⚫ ${acc(sides.b)}</div><div class="who">${esc(names.b)} — точность</div></div>
+    </div>
+    <div class="an-statuses">
+      ${Object.keys(CLASSIF).map(k => `
+        <div class="an-status">
+          <span class="sym" style="color:${CLASSIF[k].color}">${CLASSIF[k].sym}</span>
+          <span class="lbl">${CLASSIF[k].name}</span>
+          <span class="cnt">${cw[k]}/${cb[k]}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+function drawEvalGraph() {
+  const cv = $('#an-graph');
+  if (!cv) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth * dpr || 640;
+  const H = 130 * dpr;
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = profile.settings.theme === 'light' ? '#e8e0d4' : '#4a3f33';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = profile.settings.theme === 'light' ? '#fff' : '#2b2622';
+  ctx.fillRect(0, 0, W, H / 2);
+  ctx.strokeStyle = 'rgba(128,128,128,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+  if (!AN || !AN.plies) return;
+  const plies = AN.plies.filter(Boolean);
+  if (!plies.length) return;
+  const n = AN.baseGame.moves.length;
+  ctx.strokeStyle = '#b8a080';
+  ctx.lineWidth = 2 * dpr;
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) {
+    const p = AN.plies[i];
+    if (!p) break;
+    const x = (i + 1) / Math.max(1, n) * W;
+    const y = H - p.wpWhite * H;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  if (AN.idx > 0 && AN.plies[AN.idx - 1]) {
+    const x = AN.idx / Math.max(1, n) * W;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+}
+
+$('#an-start').onclick = () => anGoto(0);
+$('#an-prev').onclick = () => anGoto(AN.idx - 1);
+$('#an-next').onclick = () => anGoto(AN.idx + 1);
+$('#an-end').onclick = () => anGoto(AN.positions.length - 1);
+$('#an-back').onclick = () => { AN = null; renderAnalysisHome(); };
+$('#an-best').onclick = () => {
+  if (!AN || AN.idx === 0) { toast('Перейдите на ход'); return; }
+  const ply = AN.plies[AN.idx - 1];
+  if (!ply) { toast('Анализ ещё идёт…'); return; }
+  anBoard.arrows = [Object.assign({}, ply.bestMove, { color: 'rgba(184,160,128,0.95)' })];
+  anBoard.render();
+  toast(`Лучший ход: ${ply.bestSan}`);
+};
+$('#an-copy-pgn').onclick = () => {
+  if (!AN) return;
+  let pgn = `[Event "ChessArena"]\n[White "${AN.record.names ? AN.record.names.w : 'Белые'}"]\n[Black "${AN.record.names ? AN.record.names.b : 'Чёрные'}"]\n[Result "${AN.record.result || '*'}"]\n\n`;
+  let line = '';
+  AN.baseGame.moves.forEach((mv, i) => {
+    if (i % 2 === 0) line += (i / 2 + 1) + '. ';
+    line += mv.san + ' ';
+    if (line.length > 70) { pgn += line + '\n'; line = ''; }
+  });
+  pgn += line + (AN.record.result || '*');
+  navigator.clipboard && navigator.clipboard.writeText(pgn);
+  toast('PGN скопирован');
+};
+document.addEventListener('keydown', e => {
+  if (!AN || $('#screen-analysis').classList.contains('hidden')) return;
+  if (e.key === 'ArrowLeft') anGoto(AN.idx - 1);
+  if (e.key === 'ArrowRight') anGoto(AN.idx + 1);
+});
+
+let TR = null;
+let trBoard = createBoard($('#tr-board'));
+
+function renderOpenings() {
+  const list = $('#openings-list');
+  list.innerHTML = '';
+  let dueCount = 0;
+  for (const op of OPENINGS) {
+    const st = profile.openingStats[op.id];
+    const due = st && st.due && st.due <= Date.now();
+    if (due) dueCount++;
+    const done = st && st.done;
+    const item = el('div', 'opening-item', `
+      <div class="bot-avatar" style="font-size:24px">📖</div>
+      <div class="flex1">
+        <div><b>${op.name}</b> <span class="eco">${op.eco} · ${op.side === 'w' ? 'за белых' : 'за чёрных'}</span>
+        ${due ? '<span class="due-badge">к повторению</span>' : ''}</div>
+        <div class="desc">${op.desc}</div>
+      </div>
+      <div class="muted" style="font-size:13px">${done ? '✅ пройден' + (st.interval ? ' · повтор через ' + st.interval + ' дн.' : '') : 'не изучен'}</div>
+      <button class="btn-primary">Тренировать</button>`);
+    item.querySelector('button').onclick = () => startTrainer(op);
+    list.appendChild(item);
+  }
+  if (dueCount) toast(`📚 К повторению: ${dueCount} дебют(а)`);
+}
+
+function buildOpeningTree(op) {
+  const root = { children: {}, sans: [] };
+  for (const line of op.lines) {
+    const g = new Game();
+    let node = root;
+    for (const san of line) {
+      const m = g.sanToMove(san);
+      if (!m) { console.warn('opening line error', op.id, san); break; }
+      const realSan = g.san(m);
+      g.push(m);
+      const key = realSan.replace(/[+#]/g, '');
+      if (!node.children[key]) node.children[key] = { san: realSan, move: { fx: m.fx, fy: m.fy, tx: m.tx, ty: m.ty, promo: m.promo }, children: {} };
+      node = node.children[key];
+    }
+  }
+  return root;
+}
+
+function startTrainer(op) {
+  const tree = buildOpeningTree(op);
+  TR = {
+    op, tree, node: tree, game: new Game(),
+    userColor: op.side, mistakes: 0, done: false, plies: 0,
+  };
+  trBoard.game = TR.game;
+  trBoard.orientation = op.side;
+  trBoard.lastMove = null; trBoard.checkSq = null; trBoard.arrows = [];
+  showScreen('trainer');
+  renderTrainer();
+  trMsg(`Вы играете ${op.side === 'w' ? 'белыми' : 'чёрными'}. Повторяйте ходы дебюта!`);
+  if (TR.game.turn !== TR.userColor) setTimeout(trOppMove, 600);
+}
+trBoard.canSelect = (x, y) => {
+  if (!TR || TR.done) return false;
+  if (TR.game.turn !== TR.userColor) return false;
+  const p = TR.game.pieceAt(x, y);
+  return p && E.colorOf(p) === TR.userColor;
+};
+trBoard.legalFrom = (x, y) => TR ? TR.game.legalMoves().filter(m => m.fx === x && m.fy === y) : [];
+trBoard.onUserMove = (from, to) => {
+  if (!TR || TR.done || TR.game.turn !== TR.userColor) return;
+  const moves = TR.game.legalMoves().filter(m => m.fx === from.x && m.fy === from.y && m.tx === to.x && m.ty === to.y);
+  if (!moves.length) return;
+  let m = moves[0];
+  if (moves.some(mm => mm.promo)) {
+    showPromoPicker(TR.game.turn, pr => {
+      const mm = moves.find(x => (x.promo || '').toLowerCase() === pr) || moves[0];
+      trTryUserMove(mm);
+    });
+    return;
+  }
+  trTryUserMove(m);
+};
+
+function trTryUserMove(m) {
+  const san = TR.game.san(m);
+  const key = san.replace(/[+#]/g, '');
+  const child = TR.node.children[key];
+  if (child) {
+    TR.game.push(m);
+    TR.node = child;
+    TR.plies++;
+    trBoard.lastMove = m;
+    renderTrainer();
+    SND.move();
+    const kids = Object.keys(TR.node.children).length;
+    if (!kids) { trSuccess(); return; }
+    trMsg(choice(['Верно! ✓', 'Правильный ход! ✓', 'Так держать! ✓']), 'ok');
+    if (TR.game.turn !== TR.userColor) setTimeout(trOppMove, 500 + Math.random() * 500);
+  } else {
+    TR.mistakes++;
+    SND.beep(180, 0.2, 'sawtooth', 0.1);
+    const correct = Object.values(TR.node.children).map(c => c.san).join(' или ');
+    trMsg(`Не то! В этом дебюте играют: <b>${correct}</b>. Попробуйте ещё раз.`, 'err');
+  }
+}
+
+function trOppMove() {
+  if (!TR || TR.done) return;
+  const keys = Object.keys(TR.node.children);
+  if (!keys.length) return;
+  const child = TR.node.children[choice(keys)];
+  const m = TR.game.legalMoves().find(mm =>
+    mm.fx === child.move.fx && mm.fy === child.move.fy &&
+    mm.tx === child.move.tx && mm.ty === child.move.ty &&
+    (mm.promo || '') === (child.move.promo || ''));
+  if (!m) { trSuccess(); return; }
+  TR.game.push(m);
+  TR.node = child;
+  TR.plies++;
+  trBoard.lastMove = m;
+  renderTrainer();
+  SND.move();
+  if (!Object.keys(TR.node.children).length) { trSuccess(); return; }
+}
+
+function trMsg(html, cls) {
+  const info = $('#tr-info');
+  let msgEl = info.querySelector('.tr-msg');
+  if (!msgEl) {
+    msgEl = el('div', 'tr-msg');
+    info.appendChild(msgEl);
+  }
+  msgEl.className = 'tr-msg' + (cls ? ' ' + cls : '');
+  msgEl.innerHTML = html;
+}
+
+function trSuccess() {
+  TR.done = true;
+  trMsg(`🎉 Дебют пройден! Ошибок: ${TR.mistakes}.`, 'ok');
+  SND.end(true);
+  const st = profile.openingStats[TR.op.id] || { done: 0, interval: 0, due: 0 };
+  st.done++;
+  st.interval = TR.mistakes === 0 ? Math.min(30, (st.interval || 1) * 2 + 1) : 1;
+  st.due = Date.now() + st.interval * 24 * 3600 * 1000;
+  profile.openingStats[TR.op.id] = st;
+  unlockAch('opening_student');
+  const passed = Object.values(profile.openingStats).filter(s => s.done > 0).length;
+  if (passed >= 5) unlockAch('opening_master');
+  saveProfile();
+}
+
+function renderTrainer() {
+  $('#tr-info').innerHTML = `
+    <div class="tr-title">${TR.op.name} <span class="eco">${TR.op.eco}</span></div>
+    <div class="muted">${TR.op.desc}</div>
+    <div style="margin-top:8px">Ходов сыграно: <b>${TR.plies}</b> · Ошибок: <b>${TR.mistakes}</b></div>`;
+  $('#tr-top').innerHTML = `<div class="avatar">${TR.userColor === 'w' ? '⚫' : '⚪'}</div><div class="pinfo"><div class="pname">Тренажёр</div></div>`;
+  $('#tr-bottom').innerHTML = `<div class="avatar">${profile.avatar}</div><div class="pinfo"><div class="pname">${esc(profile.name)}</div></div>`;
+  trBoard.render();
+}
+
+$('#tr-hint').onclick = () => {
+  if (!TR || TR.done) return;
+  if (TR.game.turn !== TR.userColor) return;
+  const kids = Object.values(TR.node.children);
+  if (!kids.length) return;
+  const c = kids[0];
+  trBoard.arrows = [{ fx: c.move.fx, fy: c.move.fy, tx: c.move.tx, ty: c.move.ty }];
+  trBoard.render();
+  toast(`Подсказка: ${c.san}`);
+};
+$('#tr-restart').onclick = () => TR && startTrainer(TR.op);
+$('#tr-exit').onclick = () => { TR = null; showScreen('openings'); };
+
+let graphCat = 'blitz';
+
+function renderProfile() {
+  const s = $('#screen-profile');
+  const games = profile.games;
+  const wins = games.filter(g => (g.result === '1-0' && g.color === 'w') || (g.result === '0-1' && g.color === 'b')).length;
+  const draws = games.filter(g => g.result === '1/2-1/2').length;
+  s.innerHTML = `
+    <div class="profile-head">
+      <div class="avatar">${profile.avatar}</div>
+      <div style="flex:1">
+        <h2 style="margin:0">${esc(profile.name)}</h2>
+        <div class="muted">На арене с ${new Date(profile.created).toLocaleDateString('ru-RU')}</div>
+      </div>
+      <button class="btn" id="prof-edit">✏️ Изменить</button>
+    </div>
+    <div class="rating-cards">
+      ${Object.keys(CAT_NAMES).map(cat => `
+        <div class="rating-card">
+          <div class="rc-icon">${CAT_ICONS[cat]}</div>
+          <div class="rc-val">${ratingEntry(cat).r}${ratingEntry(cat).games < 10 ? '<span class="prov">?</span>' : ''}</div>
+          <div class="rc-name">${CAT_NAMES[cat]} · ${ratingEntry(cat).games} парт.</div>
+        </div>`).join('')}
+    </div>
+    <div class="profile-grid">
+      <div class="panel">
+        <h3>История рейтинга</h3>
+        <div class="chips" id="graph-cats">
+          ${['bullet', 'blitz', 'rapid', 'bots'].map(c => `<button class="chip ${graphCat === c ? 'active' : ''}" data-c="${c}">${CAT_ICONS[c]} ${CAT_NAMES[c]}</button>`).join('')}
+        </div>
+        <canvas id="rating-graph" width="600" height="200"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Статистика</h3>
+        <div class="home-stats" style="margin-top:0">
+          <div class="stat-chip"><div class="v">${games.length}</div><div class="k">Партий</div></div>
+          <div class="stat-chip"><div class="v">${games.length ? Math.round(wins / games.length * 100) : 0}%</div><div class="k">Побед</div></div>
+          <div class="stat-chip"><div class="v">${draws}</div><div class="k">Ничьих</div></div>
+          <div class="stat-chip"><div class="v">${profile.bestStreak}</div><div class="k">Лучшая серия</div></div>
+        </div>
+        <h3 style="margin-top:16px">Последние партии</h3>
+        <div id="prof-history"></div>
+      </div>
+    </div>
+    <h3 style="margin:16px 0 10px">Достижения</h3>
+    <div class="ach-grid">
+      ${ACHIEVEMENTS.map(a => `
+        <div class="ach ${profile.achievements.includes(a.id) ? 'unlocked' : ''}">
+          <div class="a-emoji">${a.emoji}</div>
+          <div class="a-name">${a.name}</div>
+          <div class="a-desc">${a.desc}</div>
+        </div>`).join('')}
+    </div>`;
+  $('#prof-edit').onclick = showEditProfile;
+  $$('#graph-cats .chip').forEach(c => c.onclick = () => { graphCat = c.dataset.c; renderProfile(); });
+  drawRatingGraph();
+  const hist = $('#prof-history');
+  const recent = games.slice().reverse().slice(0, 8);
+  if (!recent.length) hist.innerHTML = '<p class="muted">Пока пусто.</p>';
+  for (const g of recent) {
+    const myWin = (g.result === '1-0' && g.color === 'w') || (g.result === '0-1' && g.color === 'b');
+    const res = g.result === '1/2-1/2' ? '½' : myWin ? '1' : '0';
+    const item = el('div', 'game-item', `
+      <span class="res" style="color:${g.result === '1/2-1/2' ? 'var(--muted)' : myWin ? 'var(--accent)' : '#ff8a80'}">${res}</span>
+      <span class="flex1">${esc(g.oppName)} ${g.oppRating ? '(' + g.oppRating + ')' : ''}</span>
+      <span class="muted" style="font-size:12px">${g.delta != null ? (g.delta >= 0 ? '+' + g.delta : g.delta) : ''}</span>`);
+    item.onclick = () => openAnalysisView(g);
+    item.style.cursor = 'pointer';
+    hist.appendChild(item);
+  }
+}
+
+function drawRatingGraph() {
+  const cv = $('#rating-graph');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.fillStyle = profile.settings.theme === 'light' ? '#e8e0d4' : '#4a3f33';
+  ctx.fillRect(0, 0, W, H);
+  const pts = profile.ratingHistory.filter(h => h.cat === graphCat);
+  const data = [{ r: profile.ratings[graphCat].r - (pts.length ? 0 : 0) }];
+  if (!pts.length) {
+    ctx.fillStyle = profile.settings.theme === 'light' ? '#6f6d6a' : '#a89f92';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('Сыграйте рейтинговые партии, чтобы увидеть график', 20, H / 2);
+    return;
+  }
+  const rs = pts.map(p => p.r);
+  let min = Math.min(...rs) - 30, max = Math.max(...rs) + 30;
+  if (max - min < 60) { min -= 30; max += 30; }
+  ctx.strokeStyle = '#b8a080';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  pts.forEach((p, i) => {
+    const x = 10 + (pts.length === 1 ? W / 2 - 10 : i / (pts.length - 1) * (W - 20));
+    const y = H - 15 - (p.r - min) / (max - min) * (H - 30);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = profile.settings.theme === 'light' ? '#6f6d6a' : '#a89f92';
+  ctx.font = '11px sans-serif';
+  ctx.fillText(String(max - 30), 4, 14);
+  ctx.fillText(String(min + 30), 4, H - 6);
+}
+
+function showEditProfile() {
+  openModal(`
+    <button class="modal-close" onclick="document.querySelector('#modal-overlay').classList.add('hidden')">✕</button>
+    <h2>Редактировать профиль</h2>
+    <div class="field"><label>Имя</label><input type="text" id="edit-name" maxlength="20" value="${esc(profile.name)}"></div>
+    <div class="field"><label>Аватар</label>
+      <div class="avatar-pick">${AVATARS.map(a => `<button data-a="${a}" class="${a === profile.avatar ? 'sel' : ''}">${a}</button>`).join('')}</div>
+    </div>
+    <div class="row"><button class="btn-primary" id="edit-save">Сохранить</button></div>`);
+  let av = profile.avatar;
+  $$('.avatar-pick button').forEach(b => b.onclick = () => {
+    $$('.avatar-pick button').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel'); av = b.dataset.a;
+  });
+  $('#edit-save').onclick = () => {
+    profile.name = $('#edit-name').value.trim() || 'Игрок';
+    profile.avatar = av;
+    saveProfile(); closeModal(); renderProfile();
+  };
+}
+
+$('#btn-settings').onclick = () => {
+  const st = profile.settings;
+  openModal(`
+    <button class="modal-close" onclick="document.querySelector('#modal-overlay').classList.add('hidden')">✕</button>
+    <h2>Настройки</h2>
+    <div class="switch-row"><span>Звуки</span><button class="switch ${st.sound ? 'on' : ''}" id="set-sound"></button></div>
+    <div class="switch-row"><span>Координаты на доске</span><button class="switch ${st.coords ? 'on' : ''}" id="set-coords"></button></div>
+    <div class="switch-row"><span>Светлая тема</span><button class="switch ${st.theme === 'light' ? 'on' : ''}" id="set-theme"></button></div>
+    <div class="switch-row"><span>Подтверждать премув</span><button class="switch ${st.premoveConfirm ? 'on' : ''}" id="set-premove"></button></div>
+    <div class="field"><label>Цвет доски</label>
+      <div class="row" style="gap:4px">
+        ${Object.entries(BOARD_THEMES).map(([id, t]) =>
+          `<button class="btn ${st.board === id ? 'sel' : ''}" data-board="${id}" style="flex:1;min-width:70px;padding:6px 4px;font-size:12px;${st.board === id ? 'outline:2px solid var(--accent)' : ''}">${t.name}</button>`).join('')}
+      </div>
+    </div>
+    <div class="field"><label>Набор фигур</label>
+      <div class="row" style="gap:4px">
+        ${Object.entries(PIECE_SETS).map(([id, s]) =>
+          `<button class="btn ${st.pieceSet === id ? 'sel' : ''}" data-pieces="${id}" style="flex:1;min-width:70px;padding:6px 4px;font-size:12px;${st.pieceSet === id ? 'outline:2px solid var(--accent)' : ''}">${s.name}</button>`).join('')}
+      </div>
+    </div>`);
+  $('#set-sound').onclick = e => { st.sound = !st.sound; e.target.classList.toggle('on', st.sound); saveProfile(); };
+  $('#set-coords').onclick = e => { st.coords = !st.coords; e.target.classList.toggle('on', st.coords); saveProfile(); if (SES) gameBoard.render(); };
+  $('#set-premove').onclick = e => { st.premoveConfirm = !st.premoveConfirm; e.target.classList.toggle('on', st.premoveConfirm); saveProfile(); };
+  $('#set-theme').onclick = e => {
+    st.theme = st.theme === 'light' ? 'dark' : 'light';
+    e.target.classList.toggle('on', st.theme === 'light');
+    saveProfile(); applyTheme();
+  };
+  $$('[data-board]').forEach(b => b.onclick = () => {
+    st.board = b.dataset.board; saveProfile(); applyTheme();
+    $$('[data-board]').forEach(x => x.style.outline = x === b ? '2px solid var(--accent)' : '');
+    if (SES) gameBoard.render();
+  });
+  $$('[data-pieces]').forEach(b => b.onclick = () => {
+    st.pieceSet = b.dataset.pieces; saveProfile(); applyTheme();
+    $$('[data-pieces]').forEach(x => x.style.outline = x === b ? '2px solid var(--accent)' : '');
+    if (SES) gameBoard.render();
+  });
+};
+
+function showOnboarding() {
+  openModal(`
+    <h2>Добро пожаловать в ChessArena! ♞</h2>
+    <p class="muted">Пара вопросов для настройки стартового рейтинга.</p>
+    <div class="field"><label>Ваше имя</label><input type="text" id="ob-name" maxlength="20" value="Игрок"></div>
+    <div class="field"><label>Аватар</label>
+      <div class="avatar-pick">${AVATARS.map((a, i) => `<button data-a="${a}" class="${i === 0 ? 'sel' : ''}">${a}</button>`).join('')}</div>
+    </div>
+    <div class="field"><label>Ваш уровень</label>
+      <div class="row">
+        <button class="btn" data-lv="400">🌱 Новичок<br><span class="muted">400</span></button>
+        <button class="btn sel" data-lv="800" style="outline:2px solid var(--accent)">♟ Средний<br><span class="muted">800</span></button>
+        <button class="btn" data-lv="1200">🏆 Опытный<br><span class="muted">1200</span></button>
+      </div>
+    </div>
+    <div class="row"><button class="btn-primary" id="ob-go">Начать!</button></div>`);
+  let av = AVATARS[0], lv = 800;
+  $$('.avatar-pick button').forEach(b => b.onclick = () => {
+    $$('.avatar-pick button').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel'); av = b.dataset.a;
+  });
+  $$('[data-lv]').forEach(b => b.onclick = () => {
+    $$('[data-lv]').forEach(x => x.style.outline = '');
+    b.style.outline = '2px solid var(--accent)'; lv = +b.dataset.lv;
+  });
+  $('#ob-go').onclick = () => {
+    profile.name = $('#ob-name').value.trim() || 'Игрок';
+    profile.avatar = av;
+    for (const cat of Object.keys(profile.ratings)) profile.ratings[cat].r = lv;
+    saveProfile(); closeModal(); renderHome();
+  };
+}
+
+applyTheme();
+showScreen('home');
+if (!localStorage.getItem(PROFILE_KEY)) {
+  saveProfile();
+  showOnboarding();
+}
+
+(function () {
+  const m = location.search.match(/[?&]room=([A-Za-z0-9]{4})/);
+  if (!m) return;
+  if (location.protocol === 'file:') { toast('Для онлайн-игры запустите node server.js'); return; }
+  NET.connect(ok => {
+    if (ok) {
+      NET.send({ t: 'join', room: m[1].toUpperCase(), rating: profile.ratings.blitz.r });
+      toast('Подключение к комнате ' + m[1].toUpperCase() + '…');
+    } else toast('Сервер недоступен');
+  });
+})();
+</script>
+</body>
+</html>
